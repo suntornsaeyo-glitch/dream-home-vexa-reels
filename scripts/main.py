@@ -6,6 +6,7 @@ import base64, datetime as dt, json, math, os, random, re, subprocess, sys, time
 from pathlib import Path
 import requests
 from PIL import Image, ImageDraw, ImageFont, ImageEnhance
+from settings import settings
 from affiliate import approved_products, select_affiliate, affiliate_story, affiliate_caption
 
 ROOT=Path(__file__).resolve().parents[1]; OUT=ROOT/'output'; OUT.mkdir(exist_ok=True)
@@ -43,17 +44,20 @@ def reqpost(url, **kwargs):
 def load_state():
     try: data=json.loads(STATE.read_text())
     except FileNotFoundError: data={}
-    data.setdefault('generated',{}); data.setdefault('published',{}); data.setdefault('spent_estimate_by_month',{})
+    data.setdefault('spent_estimate_by_day',{}); data.setdefault('generated',{}); data.setdefault('published',{}); data.setdefault('spent_estimate_by_month',{})
     return data
 
 def save_state(data): STATE.parent.mkdir(exist_ok=True); STATE.write_text(json.dumps(data,indent=2,ensure_ascii=False)+'\n')
 
 def reserve(state, amount, service):
     # Conservative estimates, not measured invoices. Persist before API call to avoid runaway retries.
-    cap=float(os.getenv('MONTHLY_SPEND_CAP_USD','5.00'))
+    config=settings(); cap=config['monthly_cap_usd']
+    day=float(state['spent_estimate_by_day'].get(TODAY,0))
+    if day+amount>config['daily_cap_usd']+1e-9: raise RuntimeError('Daily estimate cap reached')
     current=float(state['spent_estimate_by_month'].get(MONTH,0))
     if current+amount>cap+1e-9: raise RuntimeError(f'Budget guard stopped {service}: estimated ${current+amount:.3f} exceeds ${cap:.2f}. No new call.')
-    state['spent_estimate_by_month'][MONTH]=round(current+amount,5); save_state(state)
+    state['spent_estimate_by_month'][MONTH]=round(current+amount,5)
+    state['spent_estimate_by_day'][TODAY]=round(day+amount,5); save_state(state)
     print(f'Reserved estimate ${amount:.3f} for {service}; estimated month total ${current+amount:.3f} (not verified billing)')
 
 def thai_fallback(title,desc,punchline,affiliate=None):
@@ -180,7 +184,7 @@ def main():
     idx=(dt.date.fromisoformat(TODAY)-dt.date(2026,11,21)).days%len(TOPICS)
     genre,title,desc,punchline=TOPICS[idx]
     products=approved_products()
-    affiliate=select_affiliate(TODAY,products)
+    affiliate=select_affiliate(TODAY,products,state.get('generated',{}))
     if affiliate:
         genre,title,desc,punchline=affiliate_story(affiliate)
     if envbool('DRY_RUN'):
@@ -200,16 +204,18 @@ def main():
         print('Already generated today; skipping duplicate paid generation'); return
     key=os.getenv('OPENAI_API_KEY','')
     if not key: raise RuntimeError('OPENAI_API_KEY missing: Entertainment mode needs a valid image API key.')
-    images_n=int(os.getenv('IMAGES_PER_REEL','3'))
+    config=settings()
+    images_n=config['images_per_reel']
     if not 1<=images_n<=3: raise ValueError('IMAGES_PER_REEL must be 1..3')
-    est_img=float(os.getenv('IMAGE_ESTIMATE_USD','0.12'))
-    est_voice=float(os.getenv('VOICE_ESTIMATE_USD','0.05'))
+    est_img=config['image_estimate_usd']
+    est_voice=config['voice_estimate_usd']
     # Verify budget before any call, including voice; reserved amount persisted prior to calls.
     remaining=images_n*est_img+est_voice+(0.01 if os.getenv('GEMINI_API_KEY') else 0)
-    cap=float(os.getenv('MONTHLY_SPEND_CAP_USD','5'))
+    cap=config['monthly_cap_usd']
     used=float(state['spent_estimate_by_month'].get(MONTH,0))
     if not all(math.isfinite(x) and x>=0 for x in (est_img,est_voice,cap,used)) or est_img<=0 or est_voice<=0: raise ValueError('Invalid budget estimates')
-    if remaining+used>cap: raise RuntimeError(f'Estimated budget too low for this run: current ${used:.2f}, run ${remaining:.2f}, cap ${cap:.2f}')
+    if remaining+float(state['spent_estimate_by_day'].get(TODAY,0))>config['daily_cap_usd']+1e-9: raise RuntimeError('Daily estimated budget too low')
+    if remaining+used>cap+1e-9: raise RuntimeError(f'Estimated budget too low for this run: current ${used:.2f}, run ${remaining:.2f}, cap ${cap:.2f}')
     if envbool('USE_PAID_VOICE',True) is False: raise RuntimeError('Thai TTS required')
     if os.getenv('GEMINI_API_KEY'): reserve(state,0.01,'Gemini script estimate')
     narration,script_source=gemini_script(title,desc,punchline,genre,affiliate)
