@@ -7,10 +7,11 @@
   "portsAttributes": {
     "8501": {
       "label": "Vexa Viral Admin",
-      "onAutoForward": "notify",
+      "onAutoForward": "openBrowser",
       "visibility": "private"
     }
   },
   "postCreateCommand": "pip install -r requirements-admin.txt",
-  "remoteUser": "vscode"
+  "remoteUser": "vscode",
+  "postStartCommand": "bash admin/autostart.sh"
 }
