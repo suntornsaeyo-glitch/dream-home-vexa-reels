@@ -187,6 +187,19 @@ def main():
         print('Already published this date; refusing duplicate.'); return
     idx=(dt.date.fromisoformat(TODAY)-dt.date(2026,11,21)).days%len(TOPICS)
     genre,title,desc,punchline=TOPICS[idx]
+    if envbool('DRY_RUN'):
+        caption=create_caption(title,desc,genre,punchline)
+        narration=(f'Okay, nobody expected this. {desc.capitalize()}. '
+                   f'Then things got really weird. {punchline}')
+        (OUT/'caption.txt').write_text(caption,encoding='utf-8')
+        (OUT/'narration.txt').write_text(narration,encoding='utf-8')
+        (OUT/'preview_plan.json').write_text(json.dumps({
+            'brand':'Vexa Viral','genre':genre,'title':title,'premise':desc,
+            'punchline':punchline,'caption':caption,'mode':'OFFLINE DRY RUN',
+            'api_calls':0,'facebook_publish':False
+        },ensure_ascii=False,indent=2),encoding='utf-8')
+        print('OFFLINE DRY RUN: output/preview_plan.json; no paid API or Facebook request')
+        return
     narration,script_source=gemini_script(title,desc,punchline,genre)
     (OUT/'narration.txt').write_text(narration)
     key=os.getenv('OPENAI_API_KEY','')
