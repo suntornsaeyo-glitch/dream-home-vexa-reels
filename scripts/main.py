@@ -114,10 +114,10 @@ def create_caption(title,desc,genre,punchline):
     elif genre=='Absurd Comedy': tags+=['#AbsurdHumor','#SurrealComedy']
     elif genre=='AI Memes': tags+=['#AIMemes','#RelatableMemes']
     else: tags+=['#ComedyShorts','#FunnyStories']
-    return (f'{title}\\n\\n{desc.capitalize()}. '
+    return (f'{title}\n\n{desc.capitalize()}. '
             f'Plot twist: {punchline} '
             'Which character should return next?'
-            '\\n\\nAI-generated fictional comedy.\\n\\n'+' '.join(tags[:6]))
+            '\n\nAI-generated fictional comedy.\n\n'+' '.join(tags[:6]))
 
 def voice(key,text,file):
     model=os.getenv('VOICE_MODEL','gpt-4o-mini-tts'); name=os.getenv('VOICE_NAME','onyx')
@@ -190,7 +190,7 @@ def main():
     narration,script_source=gemini_script(title,desc,punchline,genre)
     (OUT/'narration.txt').write_text(narration)
     key=os.getenv('OPENAI_API_KEY','')
-    if not key: raise RuntimeError('OPENAI_API_KEY missing: V2 does not silently revert to cartoon images.')
+    if not key: raise RuntimeError('OPENAI_API_KEY missing: Entertainment mode needs a valid image API key.')
     images_n=int(os.getenv('IMAGES_PER_REEL','3'))
     if not 1<=images_n<=3: raise ValueError('IMAGES_PER_REEL must be 1..3')
     est_img=float(os.getenv('IMAGE_ESTIMATE_USD','0.12'))
@@ -238,7 +238,7 @@ def main():
     caption=create_caption(title,desc,genre,punchline)
     (OUT/'caption.txt').write_text(caption,encoding='utf-8')
     meta={'date':TODAY,'title':title,'genre':genre,'caption':caption,'script_source':script_source,'voice_source':voice_source,'images':images_n,'brand':'Vexa Viral','estimated_run_usd':round(remaining,4),
-          'estimated_month_usd':state['spent_estimate_by_month'].get(MONTH),'NOTE':'These are not actual billing statements. Confirm pricing and provider budget limits.'}
+          'estimated_month_usd':state['spent_estimate_by_month'].get(MONTH),'NOTE':'Illustrated video with Ken Burns motion, NOT native AI video. Estimates are not billed amounts; confirm provider limits.'}
     (OUT/'metadata.json').write_text(json.dumps(meta,indent=2))
     print('SUCCESS: created',result,'bytes',result.stat().st_size, 'VOICE',voice_source)
     if not (envbool('ENABLE_PUBLISH') and envbool('FB_LIVE_APPROVED')):
