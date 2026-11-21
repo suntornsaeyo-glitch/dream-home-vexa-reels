@@ -17,12 +17,12 @@
 ## 3. ทดสอบโดยไม่ใช้เงิน
 1. เปิด GitHub > Actions > **Vexa Viral AI Entertainment Reels**
 2. คลิก Run workflow เลือก `main`
-3. เลือก **dry_run = true** (ค่าเริ่มต้น) แล้ว Run workflow
+3. หากต้องการตรวจบทโดยไม่ใช้เงิน ให้เลือก **dry_run = true** แล้ว Run workflow (ตอนนี้ค่าเริ่มต้นเปลี่ยนเป็น **false** เพื่อสร้าง MP4 จริง)
 4. งานควรมี artifact `preview_plan.json`, `narration.txt`, `caption.txt`; **ไม่มี MP4** เพราะไม่เรียก Image/TTS API
 5. ตรวจว่าแคปชันและ hashtag เป็นแนว comedy และ log ไม่มีคำสั่งเผยแพร่ Facebook
 
 ## 4. ทดลองสร้าง MP4 จริง
-หลังตรวจเครดิตและงบแล้ว ให้ Run workflow โดยตั้ง `dry_run = false` เพียงครั้งเดียว ระบบจะใช้ Image API และ TTS ซึ่งมีค่าใช้จ่าย ตรวจ artifact `reel.mp4`, ภาพ และเสียงก่อนใช้จริง
+หลังตรวจเครดิตและงบแล้ว ให้ Run workflow โดยใช้ `dry_run = false` ซึ่งเป็นค่าเริ่มต้น เพียงครั้งเดียว ระบบจะใช้ Image API และ TTS ซึ่งมีค่าใช้จ่าย ตรวจ artifact `reel.mp4`, ภาพ และเสียงก่อนใช้จริง
 
 ## 5. เปลี่ยนชื่อ Facebook Page
 ไปที่ Facebook Page > Settings > Page setup หรือ Page information > Name (เมนูอาจต่างกันตามเวอร์ชัน)
