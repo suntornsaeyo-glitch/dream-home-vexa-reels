@@ -1,0 +1,47 @@
+name: Dream Home Vexa Daily Reel
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 10 * * *' # 17:17 Asia/Bangkok, allows generation before ~18:00
+permissions:
+  contents: write
+concurrency:
+  group: dream-home-vexa-daily
+  cancel-in-progress: false
+jobs:
+  make-reel:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      FB_PAGE_ID: ${{ secrets.FB_PAGE_ID }}
+      FB_PAGE_ACCESS_TOKEN: ${{ secrets.FB_PAGE_ACCESS_TOKEN }}
+      ENABLE_PUBLISH: ${{ vars.ENABLE_PUBLISH || 'false' }}
+      GRAPH_VERSION: 'v27.0'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install free tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ffmpeg espeak-ng fonts-dejavu-core
+          pip install -r requirements.txt
+      - name: Produce and optionally publish
+        run: python scripts/main.py
+      - name: Save daily status
+        if: success()
+        run: |
+          git config user.name 'dream-home-vexa-bot'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add data/state.json
+          git diff --cached --quiet || (git commit -m 'Update reel state' && git push)
+      - name: Store preview for inspection (7 days)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dream-home-vexa-preview-${{ github.run_id }}
+          path: output/
+          retention-days: 7
+          if-no-files-found: ignore
