@@ -1,6 +1,7 @@
 """Curated affiliate catalog. No automatic product invention, scraping or affiliate signup."""
 import json
 import os
+import math
 import datetime as dt
 from pathlib import Path
 from urllib.parse import urlparse
@@ -44,7 +45,13 @@ def approved_products():
             seen.add(item['id'])
     return result
 
-def select_affiliate(date_string,products):
+def score(p):
+    try:
+        price=float(p.get('price_thb',0)); pct=float(p.get('commission_pct',0))
+        return price*pct/100 if math.isfinite(price) and math.isfinite(pct) and price>=0 and 0<=pct<=100 else 0
+    except (ValueError,TypeError): return 0
+
+def select_affiliate(date_string,products,history=None):
     """70% of a 30-day cycle is affiliate-ready. Never fabricate a product."""
     if not products:
         return None
@@ -52,7 +59,13 @@ def select_affiliate(date_string,products):
     ix=(date-dt.date(2026,11,21)).days
     if ix%10 in (7,8,9): # 30% organic comedy
         return None
-    return products[((ix//10)*7+ix%10)%len(products)]
+    if history is None:
+        return products[((ix//10)*7+ix%10)%len(products)]
+    last={}
+    for day,rec in history.items():
+        pid=rec.get('affiliate_id')
+        if pid: last[pid]=max(day,last.get(pid,''))
+    return sorted(products,key=lambda p:(last.get(p['id'],''),-score(p),p['id']))[0]
 
 def affiliate_caption(title,p):
     return (f'{title}\n\n'
