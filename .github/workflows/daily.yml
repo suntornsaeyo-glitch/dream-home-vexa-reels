@@ -1,12 +1,18 @@
-name: Dream Home Vexa V3 Guided Tour Reels
+name: Vexa Viral AI Entertainment Reels
 on:
   workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Test offline without using paid APIs (no MP4)"
+        required: true
+        type: boolean
+        default: true
   schedule:
     - cron: '17 10 * * *' # Approx 17:17 Thailand; GitHub schedules may be delayed
 permissions:
   contents: write
 concurrency:
-  group: dream-home-vexa-daily
+  group: vexa-viral-daily
   cancel-in-progress: false
 jobs:
   make-reel:
@@ -17,8 +23,9 @@ jobs:
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       FB_PAGE_ID: ${{ secrets.FB_PAGE_ID }}
       FB_PAGE_ACCESS_TOKEN: ${{ secrets.FB_PAGE_ACCESS_TOKEN }}
-      ENABLE_PUBLISH: ${{ vars.ENABLE_PUBLISH || 'false' }}
-      FB_LIVE_APPROVED: ${{ vars.FB_LIVE_APPROVED || 'false' }}
+      ENABLE_PUBLISH: 'false' # HARD OFF during rebrand and QA
+      FB_LIVE_APPROVED: 'false' # HARD OFF until Meta authorization and successful test
+      DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || false }}
       MONTHLY_SPEND_CAP_USD: ${{ vars.MONTHLY_SPEND_CAP_USD || '5.00' }}
       IMAGE_ESTIMATE_USD: ${{ vars.IMAGE_ESTIMATE_USD || '0.12' }}
       VOICE_ESTIMATE_USD: ${{ vars.VOICE_ESTIMATE_USD || '0.05' }}
@@ -39,7 +46,9 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y ffmpeg espeak-ng fonts-dejavu-core
           pip install -r requirements.txt
-      - name: Create premium Reel, optionally publish
+      - name: Verify Python syntax (no paid API)
+        run: python -m py_compile scripts/main.py
+      - name: Produce entertainment preview (Facebook posting disabled)
         run: python scripts/main.py
       - name: Commit estimate guard and successful publication state
         if: always()
@@ -52,7 +61,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: dream-home-vexa-v2-${{ github.run_id }}
+          name: vexa-viral-preview-${{ github.run_id }}
           path: output/
           retention-days: 7
           if-no-files-found: ignore
