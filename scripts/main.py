@@ -1,4 +1,4 @@
-"""Dream Home Vexa V2: photographic AI stills, humanlike narration, Ken Burns videos.
+"""Vexa Viral: AI entertainment stills, natural comedy voice, 30 original daily concepts.
 Use preview mode first. API charges are estimates, NOT an enforceable provider billing limit.
 """
 from __future__ import annotations
@@ -11,36 +11,36 @@ ROOT=Path(__file__).resolve().parents[1]; OUT=ROOT/'output'; OUT.mkdir(exist_ok=
 STATE=ROOT/'data/state.json'; TZ=dt.timezone(dt.timedelta(hours=7))
 TODAY=dt.datetime.now(TZ).date().isoformat(); MONTH=TODAY[:7]
 TOPICS=[
-('Two Bedrooms in a Tiny Dream Home','compact two-bedroom tropical concrete house with red brick accent and landscaped courtyard'),
-('A Tiny Tropical Paradise','small luxury tropical bungalow with lush garden and plunge pool'),
-('Concrete and Red Brick Dream House','affordable minimal concrete house with artisanal exposed red brick details'),
-('A Small Home With a Big View','small contemporary hillside house with panoramic ocean view'),
-('The Smartest Tiny House Layout','clever small modern house with practical open-plan living area'),
-('A Backyard Transformation Concept','beautiful modern garden pavilion and landscaped backyard'),
-('A Minimalist House in the Jungle','minimalist tropical concrete house in a rain forest'),
-('One Floor Plan, Three Styles','modern contemporary single story home with timber and concrete'),
-('The Dream Home With a Courtyard','small house wrapped around a green central courtyard'),
-('A Tiny Pool Villa Concept','tiny single storey luxury villa next to a compact swimming pool'),
-('Modern Tropical House Design','contemporary tropical home with slatted timber shading'),
-('A Home Built Around a Tree','sustainable house wrapping around a preserved large tree'),
-('Five Clever Small-Space Ideas','ingenious compact luxury residential architecture'),
-('A Cozy Home in the Rain','warm tropical villa with a covered terrace in gentle rain'),
-('A Futuristic Modular Dream Home','realistic prefabricated modular eco house'),
-('Concrete Versus Red Brick','minimal tropical house made with concrete and red brick'),
-('A Narrow Lot Dream Home','slim narrow-lot house with a beautiful garden entrance'),
-('The Ultimate Open-Plan Living Room','luxurious warm open plan kitchen and living room'),
-('Tiny Kitchen, Smart Design','beautiful efficient compact kitchen inside tiny home'),
-('A Modern Home in the Mountains','small mountain getaway with natural stone details'),
-('A Dream Home Under the Stars','small luminous contemporary home on a serene night'),
-('The Perfect Outdoor Terrace','modern home with a garden terrace and outdoor lounge'),
-('A House Inspired by Nature','sustainable elegant house with an organic garden'),
-('Three Amazing Tiny Home Concepts','innovative single story small home design'),
-('A Simple Home With Warm Lighting','minimalist cozy villa with beautiful warm lighting'),
-('An Incredible Rooftop Garden','compact contemporary home with green rooftop'),
-('The Most Peaceful Tiny Retreat','quiet zen tiny house nestled in a tropical garden'),
-('A Hidden Garden Dream Home','beautiful private hidden courtyard home'),
-('The House of Tomorrow','plausible near future eco friendly smart house'),
-('The Best Dream Home Designs','award-worthy simple modern tropical home'),
+    ("Funny Animals", "My Cat Became the CEO", "a serious orange cat in a tiny business suit running an office full of confused humans", "The cat's first company rule: meetings are replaced by naps."),
+    ("Absurd Comedy", "The Banana That Called the Police", "a talking banana at a grocery store reporting an outrageous crime", "Someone peeled its best friend."),
+    ("AI Memes", "When Your Alarm Clock Quits", "an expressive alarm clock storming out of a messy bedroom carrying a suitcase", "Even the alarm needs a day off."),
+    ("Comedy Stories", "The Robot Who Tried to Cook", "a friendly household robot proudly cooking a wildly chaotic breakfast", "The smoke alarm becomes the food critic."),
+    ("Funny Animals", "Dog Applies for a Human Job", "a fluffy golden dog giving a confident job interview in a modern office", "His only requested salary is unlimited treats."),
+    ("Absurd Comedy", "Giant Pineapple at the Bus Stop", "a giant friendly pineapple politely waiting among ordinary commuters", "The bus driver says no food allowed."),
+    ("AI Memes", "My Wi-Fi Has Feelings", "a home internet router acting like a dramatic soap opera star", "It disconnects whenever someone calls it slow."),
+    ("Comedy Stories", "The World's Worst Time Traveler", "a hapless time traveler arriving five minutes early to the wrong party", "He invented time travel just to be late again."),
+    ("Funny Animals", "A Penguin at the Gym", "a determined penguin training beside oversized bodybuilders", "The penguin's secret workout is sliding to the snacks."),
+    ("Absurd Comedy", "A Potato Becomes President of the Fridge", "a regal potato addressing vegetables inside a refrigerator", "Every vegetable votes yes except the French fries."),
+    ("AI Memes", "When Monday Becomes a Person", "a grumpy personified Monday appearing at a bright weekend picnic", "Everyone tries to hide behind Tuesday."),
+    ("Comedy Stories", "The Ghost Who Is Afraid of Humans", "a harmless translucent cartoonish ghost nervously hiding in a charming old house", "The ghost screams louder than its visitors."),
+    ("Funny Animals", "The Cat Who Stole the Weather Forecast", "a sophisticated tuxedo cat presenting weather on a TV studio set", "The forecast is ninety percent chance of naps."),
+    ("Absurd Comedy", "An Avocado Opens a Spa", "a smiling avocado running a luxury wellness spa for vegetables", "The cucumber requests a face mask."),
+    ("AI Memes", "My Phone Is Jealous of My Laptop", "a phone and laptop portrayed as expressive fictional tech characters on a desk", "The phone starts sending itself notifications."),
+    ("Comedy Stories", "A Superhero With One Useless Power", "a kind superhero in an original colorful costume saving a city in tiny unhelpful ways", "Their superpower is finding lost socks."),
+    ("Funny Animals", "The Office Hamster Gets Promoted", "a tiny hamster in a CEO chair with a massive desk and employees", "The hamster immediately schedules a wheel meeting."),
+    ("Absurd Comedy", "A Watermelon Joins the Police", "a cheerful watermelon police officer directing traffic in a fictional city", "The watermelon issues a ticket for speeding smoothies."),
+    ("AI Memes", "When Your Coffee Talks Back", "a paper coffee cup with expressive face in a sleepy home kitchen", "It refuses to wake up before its owner."),
+    ("Comedy Stories", "The Alien Who Loves Earth Snacks", "a cute original alien visiting a convenience store for the first time", "It travels galaxies to buy potato chips."),
+    ("Funny Animals", "Grandma Duck vs Smart Home", "an elderly duck trying to command a futuristic voice-controlled house", "The house only understands quack."),
+    ("Absurd Comedy", "The Giant Donut Escape", "a huge runaway donut rolling through a pastel city street", "The police officer follows with a cup of coffee."),
+    ("AI Memes", "When Your Fridge Judges You", "a refrigerator with a skeptical expressive face watching midnight snacking", "It turns the light off in disappointment."),
+    ("Comedy Stories", "A Wizard Who Forgot His Password", "a funny original wizard trying to unlock a glowing magic spellbook", "The password hint is abracadabra123."),
+    ("Funny Animals", "A Dog Hosts a Cooking Show", "a corgi wearing chef clothes presenting a ridiculous TV food show", "Every recipe ends with dog biscuits."),
+    ("Absurd Comedy", "An Angry Lemon at the Restaurant", "an expressive lemon complaining to a waiter in a whimsical cafe", "The waiter asks it to stop being sour."),
+    ("AI Memes", "My Vacuum Cleaner Wants a Vacation", "a robot vacuum with a tiny beach hat escaping across a living room", "It refuses to clean another crumb."),
+    ("Comedy Stories", "The Most Polite Monster Ever", "a giant gentle original fuzzy monster carefully navigating a crowded city", "It apologizes to every building it bumps."),
+    ("Funny Animals", "A Cat Opens a Luxury Hotel", "a smug fluffy cat welcoming guests to an extravagant fictional pet hotel", "Check-in requires a belly rub."),
+    ("Absurd Comedy", "The Great Fruit Dance-Off", "original lively fruit characters competing in a colorful dance competition", "The banana slips before the music even starts."),
 ]
 
 def envbool(k, default=False): return os.getenv(k,str(default)).lower() in ('1','true','yes')
@@ -65,21 +65,28 @@ def reserve(state, amount, service):
     state['spent_estimate_by_month'][MONTH]=round(current+amount,5); save_state(state)
     print(f'Reserved estimate ${amount:.3f} for {service}; estimated month total ${current+amount:.3f} (not verified billing)')
 
-def gemini_script(title,desc):
-    fallback=(f'Could this be your dream home? Imagine {desc}. '
-      'The design combines natural light, practical spaces, and a welcoming connection to the garden. '
-      'Every detail is created as an architectural concept, not a real property or construction project. '
-      'Which feature would you add to make it yours?')
+def gemini_script(title,desc,punchline,genre):
+    fallback=(f'Okay, nobody expected this. {desc.capitalize()}. '
+       'At first, everything seems perfectly normal. Then the situation gets more ridiculous by the second. '
+       f'Just when everyone thinks it cannot get stranger, {punchline[0].lower()+punchline[1:]} '
+       'That is one way to solve a problem.')
     key=os.getenv('GEMINI_API_KEY','')
     if not key: return fallback,'template'
     try:
         url='https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent'
-        prompt=f'Write 56-72 words of original English video narration for a luxury design reel titled {title!r}, depicting {desc}. Natural cinematic documentary cadence. Begin with a striking hook, describe credible architectural features, do not claim a real home exists or give unverified prices, end with a question. Narration text only.'
-        r=requests.post(url,headers={'x-goog-api-key':key},json={'contents':[{'parts':[{'text':prompt}]}],'generationConfig':{'temperature':0.85,'maxOutputTokens':250}},timeout=35)
-        if not r.ok: print('Gemini unavailable; using local narration. HTTP',r.status_code); return fallback,'template'
+        prompt=(f'Create a 45-65 word ORIGINAL English comedy voiceover for a 25-40 second Facebook Reel. '
+          f'Genre: {genre}; title: {title}; premise: {desc}; mandatory final punchline: {punchline}. '
+          'Structure: irresistible first-2-second hook, setup, escalating ridiculous twist, punchline in final sentence. '
+          'Fun, punchy, naturally spoken American English, family friendly, no real-world misinformation, '
+          'no copyrighted characters, no hateful or sexual jokes, no real celebrities, no speech labels, narration only.')
+        r=requests.post(url,headers={'x-goog-api-key':key},json={'contents':[{'parts':[{'text':prompt}]}],
+                    'generationConfig':{'temperature':0.95,'maxOutputTokens':260}},timeout=35)
+        if not r.ok:
+            print('Gemini unavailable; using local comic voiceover. HTTP',r.status_code)
+            return fallback,'template'
         txt=r.json()['candidates'][0]['content']['parts'][0]['text'].strip()
-        if 40<=len(txt.split())<=100: return txt,'gemini'
-    except Exception as e: print('Gemini fallback:',str(e)[:150])
+        if 35<=len(txt.split())<=95: return txt,'gemini'
+    except Exception as e: print('Gemini fallback:',str(e)[:140])
     return fallback,'template'
 
 def openai_image(key,prompt,file):
@@ -101,22 +108,21 @@ def openai_image_reference(key,prompt,reference,file):
     file.write_bytes(base64.b64decode(r.json()['data'][0]['b64_json']))
     with Image.open(file) as im: im.verify()
 
-def create_caption(title,desc):
-    clean=re.sub(r'[^a-zA-Z0-9 ]',' ',desc).lower()
-    tags=['#DreamHome','#HomeDesign','#AIArchitecture','#DreamHomeVexa']
-    if any(t in clean for t in ('tiny','small','compact')): tags.append('#TinyHouse')
-    if any(t in clean for t in ('tropical','garden','jungle')): tags.append('#TropicalHouse')
-    if any(t in clean for t in ('kitchen','living')): tags.append('#InteriorDesign')
-    if 'concrete' in clean: tags.append('#ModernHouse')
-    return (f'{title}\n\nA fresh AI-created home concept featuring {desc}. '
-            'Step inside this imagined design tour. Which detail would you keep?'
-            '\n\nConcept visualization only — not a real property or verified construction plan.'
-            '\n\n'+' '.join(tags[:6]))
+def create_caption(title,desc,genre,punchline):
+    tags=['#VexaViral','#FunnyReels','#AIComedy']
+    if genre=='Funny Animals': tags+=['#FunnyAnimals','#AnimalComedy']
+    elif genre=='Absurd Comedy': tags+=['#AbsurdHumor','#SurrealComedy']
+    elif genre=='AI Memes': tags+=['#AIMemes','#RelatableMemes']
+    else: tags+=['#ComedyShorts','#FunnyStories']
+    return (f'{title}\\n\\n{desc.capitalize()}. '
+            f'Plot twist: {punchline} '
+            'Which character should return next?'
+            '\\n\\nAI-generated fictional comedy.\\n\\n'+' '.join(tags[:6]))
 
 def voice(key,text,file):
     model=os.getenv('VOICE_MODEL','gpt-4o-mini-tts'); name=os.getenv('VOICE_NAME','onyx')
     payload={'model':model,'voice':name,'input':text,'response_format':'mp3','speed':0.96}
-    if model=='gpt-4o-mini-tts': payload['instructions']='Narrate in natural American English for a premium architectural documentary. Warm, confident, relaxed and personable. Subtle wonder, gentle expressive pauses, no shouting, no advertisement voice. Maintain natural human phrasing.'
+    if model=='gpt-4o-mini-tts': payload['instructions']='Perform a fun English comedy narrator voiceover with a warm, expressive, natural American accent. Playful timing and micro-pauses before jokes. Clear delivery, lively but not shouty, entertaining and human-like. Let the last punchline land with a deliberate pause.'
     r=reqpost('https://api.openai.com/v1/audio/speech',headers={'Authorization':'Bearer '+key},json=payload)
     if len(r.content)<3000: raise RuntimeError('Suspiciously short TTS audio')
     file.write_bytes(r.content)
@@ -142,10 +148,10 @@ def fit_canvas(inp,out,title,subtitle):
         d.rounded_rectangle((52,92,1028,270),radius=28,fill=(7,21,28,184))
         path='/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf'; path2='/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf'
         f1=ImageFont.truetype(path,46); f2=ImageFont.truetype(path2,30); f3=ImageFont.truetype(path2,23)
-        d.text((88,120),'DREAM HOME VEXA',font=f1,fill=(255,217,161))
+        d.text((88,120),'VEXA VIRAL',font=f1,fill=(255,217,161))
         d.text((88,202),subtitle,font=f2,fill='white')
         d.rounded_rectangle((50,1773,1030,1860),radius=15,fill=(7,21,28,150))
-        d.text((82,1795),'AI DESIGN CONCEPT  •  NOT A REAL PROPERTY',font=f3,fill='white')
+        d.text((82,1795),'AI-GENERATED FICTIONAL COMEDY',font=f3,fill='white')
         Image.alpha_composite(im.convert('RGBA'),overlay).convert('RGB').save(out,quality=91)
 
 def assemble(frames,audio,out):
@@ -180,8 +186,8 @@ def main():
     if TODAY in state['published']:
         print('Already published this date; refusing duplicate.'); return
     idx=(dt.date.fromisoformat(TODAY)-dt.date(2026,11,21)).days%len(TOPICS)
-    title,desc=TOPICS[idx]
-    narration,script_source=gemini_script(title,desc)
+    genre,title,desc,punchline=TOPICS[idx]
+    narration,script_source=gemini_script(title,desc,punchline,genre)
     (OUT/'narration.txt').write_text(narration)
     key=os.getenv('OPENAI_API_KEY','')
     if not key: raise RuntimeError('OPENAI_API_KEY missing: V2 does not silently revert to cartoon images.')
@@ -196,33 +202,29 @@ def main():
     if remaining+used>cap: raise RuntimeError(f'Estimated budget too low for this run: current ${used:.2f}, run ${remaining:.2f}, cap ${cap:.2f}')
     frames=[]
     shots=[
-        ('EXTERIOR REVEAL',
-         'Wide three-quarter exterior establishing shot of the complete house, attractive pathway and garden, architectural photography.'),
-        ('FACADE & TERRACE',
-         'A different eye-level exterior camera position of EXACTLY THE SAME house, closer to the entrance, terrace and material details. Preserve roof shape, wall positions, windows, doors, color palette, garden and site.'),
-        ('INTERIOR WALKTHROUGH',
-         'Camera positioned just INSIDE THE SAME HOUSE, looking into the open-plan living room and kitchen with a framed view through the original front windows to its garden. Preserve material palette, window geometry and architectural identity. Believable scale and interior arrangement.')
+        ('THE SETUP',f'Wide cinematic comedy establishing shot. {desc}. Make the situation instantly readable.'),
+        ('IT GETS WORSE',f'Closer medium shot of EXACT SAME main character and matching location, escalating funny confusion from {desc}. Comedic visual storytelling.'),
+        ('PLOT TWIST',f'The EXACT SAME character and location in the hilarious punchline moment: {punchline}. Strong facial expression or comic physical action.')
     ]
-    design_identity=(f'This is ONE original architectural design: {desc}. '
-       'Single-storey realistic buildable proportions; modern tropical concrete, warm natural timber, optional exposed brick, '
-       'the same window layout and roof silhouette in every shot. Photorealistic professional architectural camera, '
-       'soft late-afternoon natural light, realistic interior and landscaping, premium editorial look. '
-       'Portrait 2:3, no people, no captions, no text, no watermark, no collage, no cartoon. '
-       'An imagined design, not an existing property.')
+    design_identity=(f'Original AI comedy series {genre}. TITLE {title}. '
+        f'Main premise: {desc}. '
+        'Create striking photorealistic but absurd safe-for-work visual comedy with expressive fictional characters, '
+        'consistent character face, costume, proportions and location across all scenes. '
+        'High production value, cinematic lighting, 35mm lens, bold visual staging, vibrant attractive colors, '
+        'portrait 2:3 composition, no real people or celebrities, no brand logos, no signs, no subtitles, '
+        'no lettering, no collage, no watermarks. Clearly imaginative fiction.')
     reference=None
     for i in range(images_n):
         image_path=OUT/f'photo_{i}.png'
         prompt=(design_identity+' Shot '+str(i+1)+' of '+str(images_n)+': '+shots[i][1]
-            +' Treat reference image as the exact same building; change camera viewpoint only, not design.')
-        reserve(state,est_img,f'Architectural AI shot {i+1}/{images_n}')
+          +' Reference is the same character and scene. Preserve character identity and overall visual continuity.')
+        reserve(state,est_img,f'Entertainment AI scene {i+1}/{images_n}')
         if i==0:
-            openai_image(key,prompt,image_path)
-            reference=image_path
+            openai_image(key,prompt,image_path); reference=image_path
         else:
             openai_image_reference(key,prompt,reference,image_path)
         frame=OUT/f'frame_{i}.jpg'
-        fit_canvas(image_path,frame,title,shots[i][0])
-        frames.append(frame)
+        fit_canvas(image_path,frame,title,shots[i][0]); frames.append(frame)
     voice_path=OUT/'voice.mp3'; voice_source='OpenAI '+os.getenv('VOICE_MODEL','gpt-4o-mini-tts')
     if envbool('USE_PAID_VOICE',True):
         reserve(state,est_voice,'AI voice')
@@ -233,9 +235,9 @@ def main():
     else:
         fallback_voice(narration,voice_path); voice_source='eSpeak backup'
     result=OUT/'reel.mp4'; assemble(frames,voice_path,result)
-    caption=create_caption(title,desc)
+    caption=create_caption(title,desc,genre,punchline)
     (OUT/'caption.txt').write_text(caption,encoding='utf-8')
-    meta={'date':TODAY,'title':title,'caption':caption,'script_source':script_source,'voice_source':voice_source,'images':images_n,'estimated_run_usd':round(remaining,4),
+    meta={'date':TODAY,'title':title,'genre':genre,'caption':caption,'script_source':script_source,'voice_source':voice_source,'images':images_n,'brand':'Vexa Viral','estimated_run_usd':round(remaining,4),
           'estimated_month_usd':state['spent_estimate_by_month'].get(MONTH),'NOTE':'These are not actual billing statements. Confirm pricing and provider budget limits.'}
     (OUT/'metadata.json').write_text(json.dumps(meta,indent=2))
     print('SUCCESS: created',result,'bytes',result.stat().st_size, 'VOICE',voice_source)
