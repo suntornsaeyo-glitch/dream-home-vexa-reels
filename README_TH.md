@@ -1,46 +1,41 @@
-# Dream Home Vexa — Free-first Facebook Reels Automation
+# Vexa Viral — AI Entertainment Reels Automation
 
-ชุดตั้งต้นที่ทำงานบน GitHub Actions โดยไม่ต้องเปิดคอมพิวเตอร์ สามารถสร้างวิดีโอ 9:16 30 วินาทีภาษาอังกฤษทุกวันจากภาพบ้าน **กราฟิกที่วาดด้วยโค้ด** และเสียงสังเคราะห์แบบออฟไลน์ ไม่ใช่วิดีโอ photorealistic AI.
+ระบบนี้รีแบรนด์จาก **Dream Home Vexa** เป็น **Vexa Viral** (ชื่อเสนอสำหรับเพจ; การเปลี่ยนชื่อ Facebook จริงต้องทำใน Page Settings) ใช้ GitHub Actions สร้างวิดีโอความบันเทิงภาษาอังกฤษวันละหนึ่งคลิป
 
-## 1. ทำงานฟรีอะไรได้บ้าง
-- GitHub Actions runner ฟรีตามเงื่อนไข GitHub โดยเฉพาะ public repository; private repo ต้องตรวจโควตา Actions ของบัญชี
-- สร้างภาพสถาปัตยกรรมต้นฉบับ 5 เฟรมด้วย Pillow ฟรี
-- สร้างเสียงภาษาอังกฤษด้วย espeak-ng ฟรี (เสียงหุ่นยนต์ ไม่ใช่เสียงพรีเมียม)
-- ประกอบ MP4 ด้วย FFmpeg ฟรี
-- เลือกเปิด Gemini API สำหรับร่างสคริปต์ใหม่ได้ หากบัญชี/ภูมิภาคมีโควตาฟรี รุ่น gemini-2.5-flash-lite; ถ้าไม่มีจะใช้สคริปต์สำรอง
-- การโพสต์ Facebook จะไม่ทำงานจนกว่าจะได้ Page token/permissions และตั้ง ENABLE_PUBLISH=true
+## 1. แนวคอนเทนต์
+หมุนเวียน 30 หัวข้อที่เขียนขึ้นเองใน `scripts/main.py` ระหว่าง Funny Animals, Absurd Comedy, AI Memes และ Comedy Stories: มี setup / plot twist / punchline พร้อมภาพสามฉากและเสียงพากย์ AI
 
-## 2. ติดตั้ง
-1. สร้าง GitHub repository เช่น `dream-home-vexa-reels` ตั้ง Private ถ้าไม่ต้องการเผยโค้ด (ตรวจโควตา Actions)
-2. อัปโหลดทุกไฟล์และโฟลเดอร์นี้ไปที่ root ของ repository; ต้องรวม `.github/workflows/daily.yml`
-3. GitHub > Settings > Secrets and variables > Actions > Secrets เพิ่ม `GEMINI_API_KEY` (ถ้ามี), `FB_PAGE_ID`, `FB_PAGE_ACCESS_TOKEN` (หลังได้รับสิทธิ์)
-4. GitHub > Settings > Secrets and variables > Actions > Variables สร้าง `ENABLE_PUBLISH=false`
-5. GitHub > Actions > Dream Home Vexa Daily Reel > Run workflow
-6. ดาวน์โหลดไฟล์ reel.mp4 จาก Artifacts ด้านล่างของงาน เพื่อดูคุณภาพ
-7. เมื่อได้รับสิทธิ์เผยแพร่ของ Meta และทดสอบด้วยเพจจริงแล้ว เปลี่ยน `ENABLE_PUBLISH=true`
+**ข้อจำกัด:** ภาพเป็น AI stills + FFmpeg zoom/pan ไม่ใช่วิดีโอที่ตัวละครขยับหรือ lip-sync จริง การสร้าง true video animation ต้องเพิ่ม Video API ที่คิดค่าใช้จ่ายแยกต่างหาก
 
-## 3. ตั้งเวลา
-Workflow เริ่มเวลา 10:17 UTC = 17:17 ในไทยทุกวัน เพื่อพยายามสร้างคลิปก่อน 18:00 แต่ GitHub Actions **ไม่รับประกันเริ่มตรงเวลา** และโพสต์ทัน 18:00 เสมอ ถ้าต้องตรงเวลาให้เพิ่มการตั้งเวลาโพสต์ด้วย Meta หลังทดสอบ API.
+## 2. โหมดปลอดภัย
+- Facebook Auto Publish ถูก **บังคับปิด** ในไฟล์ `.github/workflows/daily.yml` ด้วย `ENABLE_PUBLISH: 'false'` และ `FB_LIVE_APPROVED: 'false'`
+- ระบบมี `GEMINI_API_KEY` และ `OPENAI_API_KEY` ซึ่งต้องเก็บเป็น **GitHub Actions Secrets** เท่านั้น ห้าม commit หรือโพสต์ key
+- `MONTHLY_SPEND_CAP_USD` ค่าเริ่มต้น **5.00** เป็นการรวมประมาณการในไฟล์ state ไม่ใช่วงเงินจริงจาก OpenAI และไม่ได้รับประกันจำนวนคลิปทุกวันเมื่อโควตาหมด
+- โปรดตั้ง Usage/Budget alerts ใน OpenAI Platform และตรวจบิลจริงเสมอ
+- Daily schedule เป็น 10:17 UTC = 17:17 ไทย (GitHub อาจเริ่มช้า)
 
-## 4. การตั้ง Meta
-- ใช้ Facebook Page ไม่ใช่โปรไฟล์ส่วนตัว
-- สร้าง Meta Developer App และตั้งค่า Facebook Login / Page permissions ตามข้อกำหนดปัจจุบัน
-- ขอสิทธิ์ที่เกี่ยวข้อง เช่น pages_show_list, pages_manage_posts, pages_read_engagement และการอนุมัติที่จำเป็นตามสถานะแอป
-- รับ Page ID และ Page Access Token จากขั้นตอน Facebook Login และตรวจสิทธิ์กับ Graph API Explorer
-- ใช้ secrets เท่านั้น ห้ามใส่ token ใน repo, screenshot หรือใน ChatGPT
-- ทดลอง API 3 ช่วง START -> upload binary -> FINISH / PUBLISHED ตามเอกสาร Meta
-- เช็กสถานะ processing และ URL คลิปบนเพจจริง เพราะการตอบกลับจาก FINISH ไม่รับประกันว่าคลิปมองเห็นแล้ว
+## 3. ทดสอบโดยไม่ใช้เงิน
+1. เปิด GitHub > Actions > **Vexa Viral AI Entertainment Reels**
+2. คลิก Run workflow เลือก `main`
+3. เลือก **dry_run = true** (ค่าเริ่มต้น) แล้ว Run workflow
+4. งานควรมี artifact `preview_plan.json`, `narration.txt`, `caption.txt`; **ไม่มี MP4** เพราะไม่เรียก Image/TTS API
+5. ตรวจว่าแคปชันและ hashtag เป็นแนว comedy และ log ไม่มีคำสั่งเผยแพร่ Facebook
 
-## 5. งบและความเสี่ยง
-- **ห้ามเปิด Billing ใน AI provider ถ้าอยากจำกัดที่ 0 บาท**
-- ติดตาม Google AI Studio API quotas และ GitHub Billing / Usage ก่อนและหลังทดสอบ
-- Gemini อาจตอบ 429/403; ระบบจะใช้บทสำรอง โดยไม่พยายามซื้อโควตา
-- หากโพสต์สำเร็จแต่ `git push` state ไม่สำเร็จ อาจโพสต์ซ้ำได้ในการรันใหม่ ควรตรวจเพจก่อน retry; ระบบนี้เป็น starter ไม่ใช่ production-grade idempotency
-- ภาพสไตล์กราฟิก; หากต้องการ AI photorealistic 100% ต้องมีบริการ image-generation API และงบ/เครดิตเพียงพอ
-- ไม่รับประกันผ่าน Facebook Monetization; ตรวจความเป็นต้นฉบับ คุณภาพ และเนื้อหาก่อนเปิดโพสต์อัตโนมัติ
-- รหัสนี้ทำให้โพสต์ทันทีหลังสร้างในงาน schedule ไม่ใช่รอให้ถึงเวลา 18:00 แน่นอน
+## 4. ทดลองสร้าง MP4 จริง
+หลังตรวจเครดิตและงบแล้ว ให้ Run workflow โดยตั้ง `dry_run = false` เพียงครั้งเดียว ระบบจะใช้ Image API และ TTS ซึ่งมีค่าใช้จ่าย ตรวจ artifact `reel.mp4`, ภาพ และเสียงก่อนใช้จริง
 
-## 6. ปรับแต่ง
-- แก้ 30 หัวข้อใน `TOPICS` ใน `scripts/main.py`
-- แก้ข้อความ/ภาพโดยปรับ `scene()`, เสียง `espeak-ng -s`, และความละเอียด FFmpeg
-- ต้องการเสียงดีขึ้น เชื่อม TTS provider ที่มี license สำหรับ commercial use และคิดค่าใช้จ่ายตามจริง
+## 5. เปลี่ยนชื่อ Facebook Page
+ไปที่ Facebook Page > Settings > Page setup หรือ Page information > Name (เมนูอาจต่างกันตามเวอร์ชัน)
+เสนอชื่อ **Vexa Viral** ตรวจสอบชื่อซ้ำและ @username ก่อนยืนยัน และเปลี่ยนหมวดหมู่เป็น Digital Creator หรือ Entertainment ตามรายการที่มี
+Bio: "Funny AI stories, absurd memes, talking animals and surprising comedy twists. Original English entertainment, every day."
+การเปลี่ยนชื่อเพจต้องใช้สิทธิ์ผู้ดูแล Facebook และอาจต้องรอ Meta อนุมัติ ไม่ได้เกิดขึ้นโดยการเปลี่ยนชื่อใน GitHub
+
+## 6. Facebook Reels API
+ยังไม่เชื่อม/ยืนยัน Page Token และสิทธิ์ Meta: ห้ามเปิด auto-publish ก่อนตรวจสิทธิ์ Page, ทดสอบ upload, ตรวจสถานะ processed/published และจัดการ duplicate/retries
+ตัวแปร `FB_PAGE_ID` และ `FB_PAGE_ACCESS_TOKEN` หากสร้างต้องอยู่ใน Secrets เท่านั้น
+โค้ดมีการเรียก start/upload/finish แต่ไม่ได้ยืนยันว่า Meta เผยแพร่สำเร็จจนกว่าจะตรวจหน้าเพจจริง
+
+## 7. ต้นทุนที่ต้องทราบ
+ค่า `IMAGE_ESTIMATE_USD` และ `VOICE_ESTIMATE_USD` เป็นตัวเลขสมมติอาจต่ำกว่าหรือสูงกว่าค่าจริง โดย default 3 ภาพ x $0.12 + voice $0.05 = $0.41/คลิป $5 เดือนหนึ่งจึงรองรับการประมาณค่าเพียง ~12 คลิป ไม่รับประกันวันละคลิปครบเดือน; ต้องเปลี่ยนงบ/จำนวนภาพตามค่าใช้งานจริงหรือใช้โมเดลราคาต่ำกว่า
+
+Repo: https://github.com/suntornsaeyo-glitch/dream-home-vexa-reels
