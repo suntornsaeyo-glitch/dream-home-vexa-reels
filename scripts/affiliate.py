@@ -53,12 +53,12 @@ def select_affiliate(date_string,products):
     return products[(ix//1)%len(products)]
 
 def affiliate_caption(title,p):
-    return (f'{title}\\n\\n'
+    return (f'{title}\n\n'
         'AI-generated comedy skit. The product shown is a fictional illustration, '
-        'not a real demonstration or review.\\n'
-        f'Product listing: {p["title"]}\\n'
-        'Affiliate disclosure: I may earn a commission if you purchase through this link, at no extra cost to you.\\n'
-        f'{p["affiliate_url"]}\\n\\n'
+        'not a real demonstration or review.\n'
+        f'Product listing: {p["title"]}\n'
+        'Affiliate disclosure: I may earn a commission if you purchase through this link, at no extra cost to you.\n'
+        f'{p["affiliate_url"]}\n\n'
         '#VexaViral #AIFunny #AffiliateFinds #GadgetFinds #ComedyReels')
 
 def affiliate_story(p):
