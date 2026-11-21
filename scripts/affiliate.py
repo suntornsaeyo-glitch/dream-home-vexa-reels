@@ -22,7 +22,9 @@ def valid_product(item):
     u=urlparse(item['affiliate_url'])
     if u.scheme!='https' or not u.hostname or u.username or u.password:
         return False
-    if u.hostname in ('example.com','localhost') or u.hostname.endswith('.example'):
+    if u.hostname != 'shopee.co.th' and not u.hostname.endswith('.shopee.co.th') and u.hostname != 'shope.ee':
+        return False
+    if item['program'] != 'Shopee Thailand':
         return False
     if any(x in item['affiliate_url'].lower() for x in ('your-link','placeholder','affiliate-link-here')):
         return False
@@ -50,25 +52,21 @@ def select_affiliate(date_string,products):
     ix=(date-dt.date(2026,11,21)).days
     if ix%10 in (7,8,9): # 30% organic comedy
         return None
-    return products[(ix//1)%len(products)]
+    return products[((ix//10)*7+ix%10)%len(products)]
 
 def affiliate_caption(title,p):
     return (f'{title}\n\n'
-        'AI-generated comedy skit. The product shown is a fictional illustration, '
-        'not a real demonstration or review.\n'
-        f'Product listing: {p["title"]}\n'
-        'Affiliate disclosure: I may earn a commission if you purchase through this link, at no extra cost to you.\n'
+        'คลิปตลกจาก AI เป็นเรื่องสมมติ ไม่ใช่ภาพทดสอบหรือรีวิวสินค้าจริง\n'
+        f'สินค้าที่เกี่ยวข้อง: {p["title"]}\n'
+        'ดูรายละเอียดและราคาปัจจุบันที่ Shopee\n'
+        'ลิงก์แอฟฟิลิเอต: เพจอาจได้รับค่าคอมมิชชันหากคุณซื้อผ่านลิงก์นี้\n'
         f'{p["affiliate_url"]}\n\n'
-        '#VexaViral #AIFunny #AffiliateFinds #GadgetFinds #ComedyReels')
+        '#VexaViral #คลิปตลก #ป้ายยา #ของน่าใช้ #ช้อปปี้')
 
 def affiliate_story(p):
-    # A product is never presented as tested, personally used, or performing invented feats.
-    subject=p['visual_description']
-    return (
-        'AI Product Comedy',
-        f'When a {p["category"].replace("_"," ")} Gadget Becomes the Boss',
-        f'An imaginative fictional comedy scene featuring a generic {subject}. '
-        'The gadget acts like an overly confident cartoon boss in a colorful household. '
-        'No text or real brand marks on the fictional prop.',
-        'The gadget gives everyone a performance review, including the toaster.'
-    )
+    category={'home_gadgets':'ของใช้ในบ้าน','pet_gadgets':'ของใช้สัตว์เลี้ยง',
+        'kitchen_gadgets':'ของใช้ในครัว','desk_gadgets':'อุปกรณ์โต๊ะทำงาน',
+        'funny_gifts':'ของขวัญ','tech_accessories':'อุปกรณ์ไอที'}[p['category']]
+    return ('ตลกสินค้า',f'เมื่อ{category}อยากเป็นเจ้านาย',
+        f'ฉากตลกสมมติที่มีอุปกรณ์ทั่วไปประเภท {p["visual_description"]} ทำตัวเป็นเจ้านายจอมสั่ง ไม่ใช่สินค้าจริง',
+        'สุดท้ายเจ้านายสั่งให้ทุกคนพัก แต่ตัวเองกลับต้องทำงานแทนทั้งหมด')
