@@ -1,4 +1,4 @@
-name: Vexa Viral Thailand - Shopee Affiliate
+name: Vexa Viral Thailand - Smart Product Manager V2
 on:
   workflow_dispatch:
     inputs:
@@ -31,10 +31,11 @@ jobs:
       FB_LIVE_APPROVED: 'false' # HARD OFF until Meta authorization and successful test
       DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || false }}
       ALLOW_REGENERATE: ${{ github.event_name == 'workflow_dispatch' && inputs.allow_regenerate || false }}
-      MONTHLY_SPEND_CAP_USD: ${{ vars.MONTHLY_SPEND_CAP_USD || '5.00' }}
-      IMAGE_ESTIMATE_USD: ${{ vars.IMAGE_ESTIMATE_USD || '0.12' }}
-      VOICE_ESTIMATE_USD: ${{ vars.VOICE_ESTIMATE_USD || '0.05' }}
-      IMAGES_PER_REEL: ${{ vars.IMAGES_PER_REEL || '3' }}
+      MONTHLY_SPEND_CAP_USD: ${{ vars.MONTHLY_SPEND_CAP_USD }}
+      IMAGE_ESTIMATE_USD: ${{ vars.IMAGE_ESTIMATE_USD }}
+      VOICE_ESTIMATE_USD: ${{ vars.VOICE_ESTIMATE_USD }}
+      IMAGES_PER_REEL: ${{ vars.IMAGES_PER_REEL }}
+      DAILY_SPEND_CAP_USD: ${{ vars.DAILY_SPEND_CAP_USD }}
       IMAGE_MODEL: gpt-image-1-mini
       VOICE_MODEL: gpt-4o-mini-tts
       VOICE_NAME: onyx
@@ -53,7 +54,7 @@ jobs:
           pip install -r requirements.txt
       - name: Verify Python syntax and affiliate rules (free)
         run: |
-          python -m py_compile scripts/main.py scripts/affiliate.py
+          python -m py_compile scripts/main.py scripts/affiliate.py scripts/settings.py admin/app.py admin/catalog.py admin/github_client.py
           python -m unittest discover -s tests -v
       - name: Produce Thai MP4 and affiliate-ready caption (Facebook disabled)
         run: python scripts/main.py
