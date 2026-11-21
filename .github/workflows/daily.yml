@@ -1,7 +1,11 @@
-name: Vexa Viral AI Reels + Affiliate
+name: Vexa Viral Thailand - Shopee Affiliate
 on:
   workflow_dispatch:
     inputs:
+      allow_regenerate:
+        description: 'Allow another paid preview on the same day'
+        type: boolean
+        default: false
       dry_run:
         description: "Skip paid image & voice generation (no MP4) — select true only for a free test"
         required: true
@@ -26,6 +30,7 @@ jobs:
       ENABLE_PUBLISH: 'false' # HARD OFF during rebrand and QA
       FB_LIVE_APPROVED: 'false' # HARD OFF until Meta authorization and successful test
       DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || false }}
+      ALLOW_REGENERATE: ${{ github.event_name == 'workflow_dispatch' && inputs.allow_regenerate || false }}
       MONTHLY_SPEND_CAP_USD: ${{ vars.MONTHLY_SPEND_CAP_USD || '5.00' }}
       IMAGE_ESTIMATE_USD: ${{ vars.IMAGE_ESTIMATE_USD || '0.12' }}
       VOICE_ESTIMATE_USD: ${{ vars.VOICE_ESTIMATE_USD || '0.05' }}
@@ -44,13 +49,13 @@ jobs:
       - name: Install tools
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y ffmpeg espeak-ng fonts-dejavu-core
+          sudo apt-get install -y ffmpeg espeak-ng fonts-dejavu-core fonts-thai-tlwg-ttf
           pip install -r requirements.txt
       - name: Verify Python syntax and affiliate rules (free)
         run: |
           python -m py_compile scripts/main.py scripts/affiliate.py
           python -m unittest discover -s tests -v
-      - name: Produce English MP4 and affiliate-ready caption (Facebook disabled)
+      - name: Produce Thai MP4 and affiliate-ready caption (Facebook disabled)
         run: python scripts/main.py
       - name: Commit estimate guard and successful publication state
         if: always()
