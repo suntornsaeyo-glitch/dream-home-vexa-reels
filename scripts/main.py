@@ -89,6 +89,30 @@ def openai_image(key,prompt,file):
     raw=base64.b64decode(data['data'][0]['b64_json']); file.write_bytes(raw)
     with Image.open(file) as im: im.verify()
 
+def openai_image_reference(key,prompt,reference,file):
+    """Generate a changed camera view based on the original house photo."""
+    model=os.getenv('IMAGE_MODEL','gpt-image-1-mini')
+    with open(reference,'rb') as fh:
+        r=requests.post('https://api.openai.com/v1/images/edits',
+            headers={'Authorization':'Bearer '+key},
+            data={'model':model,'prompt':prompt,'size':'1024x1536','quality':'medium','n':'1'},
+            files={'image':(reference.name,fh,'image/png')},timeout=220)
+    if not r.ok: raise RuntimeError(f'Image edit failed {r.status_code}: {r.text[:350]}')
+    file.write_bytes(base64.b64decode(r.json()['data'][0]['b64_json']))
+    with Image.open(file) as im: im.verify()
+
+def create_caption(title,desc):
+    clean=re.sub(r'[^a-zA-Z0-9 ]',' ',desc).lower()
+    tags=['#DreamHome','#HomeDesign','#AIArchitecture','#DreamHomeVexa']
+    if any(t in clean for t in ('tiny','small','compact')): tags.append('#TinyHouse')
+    if any(t in clean for t in ('tropical','garden','jungle')): tags.append('#TropicalHouse')
+    if any(t in clean for t in ('kitchen','living')): tags.append('#InteriorDesign')
+    if 'concrete' in clean: tags.append('#ModernHouse')
+    return (f'{title}\\n\\nA fresh AI-created home concept featuring {desc}. '
+            'Step inside this imagined design tour. Which detail would you keep?'
+            '\\n\\nConcept visualization only — not a real property or verified construction plan.'
+            '\\n\\n'+' '.join(tags[:6]))
+
 def voice(key,text,file):
     model=os.getenv('VOICE_MODEL','gpt-4o-mini-tts'); name=os.getenv('VOICE_NAME','onyx')
     payload={'model':model,'voice':name,'input':text,'response_format':'mp3','speed':0.96}
@@ -171,18 +195,34 @@ def main():
     used=float(state['spent_estimate_by_month'].get(MONTH,0))
     if remaining+used>cap: raise RuntimeError(f'Estimated budget too low for this run: current ${used:.2f}, run ${remaining:.2f}, cap ${cap:.2f}')
     frames=[]
-    shot=['wide exterior establishing shot, 3/4 architectural angle','new complementary view of the same architectural style, close-up facade details','open plan living kitchen interior matching the same architecture']
+    shots=[
+        ('EXTERIOR REVEAL',
+         'Wide three-quarter exterior establishing shot of the complete house, attractive pathway and garden, architectural photography.'),
+        ('FACADE & TERRACE',
+         'A different eye-level exterior camera position of EXACTLY THE SAME house, closer to the entrance, terrace and material details. Preserve roof shape, wall positions, windows, doors, color palette, garden and site.'),
+        ('INTERIOR WALKTHROUGH',
+         'Camera positioned just INSIDE THE SAME HOUSE, looking into the open-plan living room and kitchen with a framed view through the original front windows to its garden. Preserve material palette, window geometry and architectural identity. Believable scale and interior arrangement.')
+    ]
+    design_identity=(f'This is ONE original architectural design: {desc}. '
+       'Single-storey realistic buildable proportions; modern tropical concrete, warm natural timber, optional exposed brick, '
+       'the same window layout and roof silhouette in every shot. Photorealistic professional architectural camera, '
+       'soft late-afternoon natural light, realistic interior and landscaping, premium editorial look. '
+       'Portrait 2:3, no people, no captions, no text, no watermark, no collage, no cartoon. '
+       'An imagined design, not an existing property.')
+    reference=None
     for i in range(images_n):
         image_path=OUT/f'photo_{i}.png'
-        prompt=(f'Photorealistic high-end architectural photography. Subject: {desc}. '
-                f'Shot: {shot[i]}. Realistic buildable proportions, consistent tropical modern aesthetic, '
-                'concrete, warm natural timber, optional red brick. Beautiful realistic late afternoon light, '
-                'refined landscaping, believable materials, tasteful luxurious atmosphere, 35mm architectural photography, '
-                'original design. VERTICAL 2:3 composition. NO captions, NO letters, NO watermarks, NO diagrams, NO drawings, NO cartoon, NO people. '
-                'Design concept, not a real listing.')
-        reserve(state,est_img,f'AI image {i+1}/{images_n}')
-        openai_image(key,prompt,image_path)
-        frame=OUT/f'frame_{i}.jpg'; fit_canvas(image_path,frame,title,['PHOTOREALISTIC HOME CONCEPT','DESIGN DETAILS','INSIDE THE DREAM HOME'][i]); frames.append(frame)
+        prompt=(design_identity+' Shot '+str(i+1)+' of '+str(images_n)+': '+shots[i][1]
+            +' Treat reference image as the exact same building; change camera viewpoint only, not design.')
+        reserve(state,est_img,f'Architectural AI shot {i+1}/{images_n}')
+        if i==0:
+            openai_image(key,prompt,image_path)
+            reference=image_path
+        else:
+            openai_image_reference(key,prompt,reference,image_path)
+        frame=OUT/f'frame_{i}.jpg'
+        fit_canvas(image_path,frame,title,shots[i][0])
+        frames.append(frame)
     voice_path=OUT/'voice.mp3'; voice_source='OpenAI '+os.getenv('VOICE_MODEL','gpt-4o-mini-tts')
     if envbool('USE_PAID_VOICE',True):
         reserve(state,est_voice,'AI voice')
@@ -193,14 +233,15 @@ def main():
     else:
         fallback_voice(narration,voice_path); voice_source='eSpeak backup'
     result=OUT/'reel.mp4'; assemble(frames,voice_path,result)
-    meta={'date':TODAY,'title':title,'script_source':script_source,'voice_source':voice_source,'images':images_n,'estimated_run_usd':round(remaining,4),
+    caption=create_caption(title,desc)
+    (OUT/'caption.txt').write_text(caption,encoding='utf-8')
+    meta={'date':TODAY,'title':title,'caption':caption,'script_source':script_source,'voice_source':voice_source,'images':images_n,'estimated_run_usd':round(remaining,4),
           'estimated_month_usd':state['spent_estimate_by_month'].get(MONTH),'NOTE':'These are not actual billing statements. Confirm pricing and provider budget limits.'}
     (OUT/'metadata.json').write_text(json.dumps(meta,indent=2))
     print('SUCCESS: created',result,'bytes',result.stat().st_size, 'VOICE',voice_source)
-    if not envbool('ENABLE_PUBLISH'):
-        print('PREVIEW ONLY: publishing is OFF');return
+    if not (envbool('ENABLE_PUBLISH') and envbool('FB_LIVE_APPROVED')):
+        print('PREVIEW ONLY: publishing requires BOTH ENABLE_PUBLISH and FB_LIVE_APPROVED=true');return
     if not (os.getenv('FB_PAGE_ID') and os.getenv('FB_PAGE_ACCESS_TOKEN')): raise RuntimeError('Missing Facebook page secrets')
-    caption=f'{title} — AI-generated architectural concept. Which feature would you choose? #DreamHome #HomeDesign #AIArchitecture #TinyHouse'
     response=publish(result,title,caption); print('Facebook response:',response)
     state['published'][TODAY]=response;save_state(state)
 
