@@ -3,10 +3,10 @@ on:
   workflow_dispatch:
     inputs:
       dry_run:
-        description: "Test offline without using paid APIs (no MP4)"
+        description: "Skip paid image & voice generation (no MP4) — select true only for a free test"
         required: true
         type: boolean
-        default: true
+        default: false
   schedule:
     - cron: '17 10 * * *' # Approx 17:17 Thailand; GitHub schedules may be delayed
 permissions:
