@@ -1,41 +1,73 @@
-# Vexa Viral — AI Entertainment Reels Automation
+# Vexa Viral — AI Reels + Facebook Affiliate
 
-ระบบนี้รีแบรนด์จาก **Dream Home Vexa** เป็น **Vexa Viral** (ชื่อเสนอสำหรับเพจ; การเปลี่ยนชื่อ Facebook จริงต้องทำใน Page Settings) ใช้ GitHub Actions สร้างวิดีโอความบันเทิงภาษาอังกฤษวันละหนึ่งคลิป
+**สถานะ:** โค้ดบน GitHub อัปเดตแล้ว แต่ Facebook Auto Publish ยังถูกล็อกเป็น `false` ใน GitHub Actions และยังไม่ได้ยืนยันการโพสต์จริง
 
-## 1. แนวคอนเทนต์
-หมุนเวียน 30 หัวข้อที่เขียนขึ้นเองใน `scripts/main.py` ระหว่าง Funny Animals, Absurd Comedy, AI Memes และ Comedy Stories: มี setup / plot twist / punchline พร้อมภาพสามฉากและเสียงพากย์ AI
+## เป้าหมาย
+- ภาษาอังกฤษ วันละ 1 MP4 แนวตั้ง 1080x1920 เมื่อ API สำเร็จและมีงบประมาณพอ
+- ภาพ AI 3 ฉาก + เสียงบรรยาย AI + Caption + Hashtags
+- 70% Affiliate entertainment / 30% viral comedy เมื่อมีสินค้าที่อนุมัติแล้ว
+- ถ้า `data/affiliate_products.json` ยังไม่มีสินค้าที่ตรวจสอบผ่าน จะสร้าง **คลิปตลกปกติ** โดยไม่มีลิงก์ Affiliate หรือตัวเลขคอมมิชชันที่แต่งขึ้น
+- ภาพเคลื่อนไหวแบบซูมและแพนจากภาพนิ่ง AI ไม่ใช่ตัวละครพูดขยับปากหรือ full AI-video
 
-**ข้อจำกัด:** ภาพเป็น AI stills + FFmpeg zoom/pan ไม่ใช่วิดีโอที่ตัวละครขยับหรือ lip-sync จริง การสร้าง true video animation ต้องเพิ่ม Video API ที่คิดค่าใช้จ่ายแยกต่างหาก
+## 1. เพิ่มสินค้า Affiliate ที่ได้รับอนุมัติ
+เปิด `data/affiliate_products.json` แล้วเพิ่มรายการที่ **มีลิงก์จากบัญชี Affiliate ของคุณเอง** ตัวอย่างโครงสร้าง (เป็นตัวอย่างช่องข้อมูล ไม่ใช่ลิงก์ใช้งานจริง):
 
-## 2. โหมดปลอดภัย
-- Facebook Auto Publish ถูก **บังคับปิด** ในไฟล์ `.github/workflows/daily.yml` ด้วย `ENABLE_PUBLISH: 'false'` และ `FB_LIVE_APPROVED: 'false'`
-- ระบบมี `GEMINI_API_KEY` และ `OPENAI_API_KEY` ซึ่งต้องเก็บเป็น **GitHub Actions Secrets** เท่านั้น ห้าม commit หรือโพสต์ key
-- `MONTHLY_SPEND_CAP_USD` ค่าเริ่มต้น **5.00** เป็นการรวมประมาณการในไฟล์ state ไม่ใช่วงเงินจริงจาก OpenAI และไม่ได้รับประกันจำนวนคลิปทุกวันเมื่อโควตาหมด
-- โปรดตั้ง Usage/Budget alerts ใน OpenAI Platform และตรวจบิลจริงเสมอ
-- Daily schedule เป็น 10:17 UTC = 17:17 ไทย (GitHub อาจเริ่มช้า)
+```json
+{
+  "products": [
+    {
+      "id": "your-unique-product-id",
+      "title": "Actual Product Listing Title",
+      "category": "pet_gadgets",
+      "affiliate_url": "https://YOUR-REAL-AFFILIATE-LINK",
+      "program": "Your Affiliate Program",
+      "visual_description": "generic pet feeding gadget as a fictional prop",
+      "usage_rights_confirmed": true,
+      "approved": true
+    }
+  ]
+}
+```
 
-## 3. ทดสอบโดยไม่ใช้เงิน
-1. เปิด GitHub > Actions > **Vexa Viral AI Entertainment Reels**
-2. คลิก Run workflow เลือก `main`
-3. หากต้องการตรวจบทโดยไม่ใช้เงิน ให้เลือก **dry_run = true** แล้ว Run workflow (ตอนนี้ค่าเริ่มต้นเปลี่ยนเป็น **false** เพื่อสร้าง MP4 จริง)
-4. งานควรมี artifact `preview_plan.json`, `narration.txt`, `caption.txt`; **ไม่มี MP4** เพราะไม่เรียก Image/TTS API
-5. ตรวจว่าแคปชันและ hashtag เป็นแนว comedy และ log ไม่มีคำสั่งเผยแพร่ Facebook
+หมวดหมู่ที่อนุญาต: `home_gadgets`, `pet_gadgets`, `kitchen_gadgets`, `desk_gadgets`, `funny_gifts`, `tech_accessories`
 
-## 4. ทดลองสร้าง MP4 จริง
-หลังตรวจเครดิตและงบแล้ว ให้ Run workflow โดยใช้ `dry_run = false` ซึ่งเป็นค่าเริ่มต้น เพียงครั้งเดียว ระบบจะใช้ Image API และ TTS ซึ่งมีค่าใช้จ่าย ตรวจ artifact `reel.mp4`, ภาพ และเสียงก่อนใช้จริง
+ห้ามใช้ตัวอย่างลิงก์ด้านบนจริง, ห้ามใส่ลิงก์ที่ไม่ได้รับจากโปรแกรม Affiliate หรือสินค้าที่ไม่ได้ตรวจสอบเงื่อนไขโปรโมต
+ค่า `usage_rights_confirmed` หมายถึงคุณยืนยันว่ามีสิทธิ์ใช้ข้อมูล/สื่อประกอบตามที่โปรแกรมอนุญาต ไม่ใช่การซื้อสิทธิ์จากโค้ดนี้
+**เมื่อไม่มีสินค้า approved ที่มี URL HTTPS ถูกต้อง ระบบจะไม่แต่งลิงก์ให้เอง**
 
-## 5. เปลี่ยนชื่อ Facebook Page
-ไปที่ Facebook Page > Settings > Page setup หรือ Page information > Name (เมนูอาจต่างกันตามเวอร์ชัน)
-เสนอชื่อ **Vexa Viral** ตรวจสอบชื่อซ้ำและ @username ก่อนยืนยัน และเปลี่ยนหมวดหมู่เป็น Digital Creator หรือ Entertainment ตามรายการที่มี
-Bio: "Funny AI stories, absurd memes, talking animals and surprising comedy twists. Original English entertainment, every day."
-การเปลี่ยนชื่อเพจต้องใช้สิทธิ์ผู้ดูแล Facebook และอาจต้องรอ Meta อนุมัติ ไม่ได้เกิดขึ้นโดยการเปลี่ยนชื่อใน GitHub
+## 2. ขั้นตอนสร้างคลิป
+1. GitHub Actions เริ่มราว 17:17 เวลาไทย (อาจล่าช้าหรือรันไม่ตรงเวลา)
+2. เลือกหัวข้อ 30 ตอนหมุนเวียน; หากเป็นวัน Affiliate และมีสินค้าที่ผ่าน validation เลือกรายการสินค้า
+3. Gemini เขียนบทภาษาอังกฤษให้เป็นมุกตลก หากไม่ตอบจะใช้บทสำรอง
+4. OpenAI Image API สร้าง 3 ภาพ AI, TTS สร้างเสียงตลกอังกฤษ, FFmpeg ทำคลิป `reel.mp4` (ไม่ใช่ generative moving video)
+5. บันทึก `caption.txt`, `narration.txt`, `metadata.json` และ MP4 ใน Artifacts 7 วัน
+6. **ไม่โพสต์ Facebook:** ทั้ง `ENABLE_PUBLISH` และ `FB_LIVE_APPROVED` ถูกบังคับ `false` ใน Workflow
 
-## 6. Facebook Reels API
-ยังไม่เชื่อม/ยืนยัน Page Token และสิทธิ์ Meta: ห้ามเปิด auto-publish ก่อนตรวจสิทธิ์ Page, ทดสอบ upload, ตรวจสถานะ processed/published และจัดการ duplicate/retries
-ตัวแปร `FB_PAGE_ID` และ `FB_PAGE_ACCESS_TOKEN` หากสร้างต้องอยู่ใน Secrets เท่านั้น
-โค้ดมีการเรียก start/upload/finish แต่ไม่ได้ยืนยันว่า Meta เผยแพร่สำเร็จจนกว่าจะตรวจหน้าเพจจริง
+## 3. การทดสอบ
+เปิด GitHub Actions → `Vexa Viral AI Reels + Affiliate` → Run workflow
+- `dry_run = true`: ไม่เสียค่า Image/TTS API สร้าง `preview_plan.json`, caption, narration แต่ยังไม่มี MP4
+- `dry_run = false`: ทดสอบ MP4 จริง (มีค่าใช้จ่าย) และยัง **ไม่โพสต์ Facebook**
+- Workflow ตรวจ `python -m py_compile` และรัน `tests/test_affiliate.py` ก่อนใช้ API
+- หากมีข้อผิดพลาด ดู Logs และตรวจงบก่อนรันซ้ำ เพราะอาจคิดค่า API ไปแล้วบางส่วน
 
-## 7. ต้นทุนที่ต้องทราบ
-ค่า `IMAGE_ESTIMATE_USD` และ `VOICE_ESTIMATE_USD` เป็นตัวเลขสมมติอาจต่ำกว่าหรือสูงกว่าค่าจริง โดย default 3 ภาพ x $0.12 + voice $0.05 = $0.41/คลิป $5 เดือนหนึ่งจึงรองรับการประมาณค่าเพียง ~12 คลิป ไม่รับประกันวันละคลิปครบเดือน; ต้องเปลี่ยนงบ/จำนวนภาพตามค่าใช้งานจริงหรือใช้โมเดลราคาต่ำกว่า
+## 4. งบประมาณ
+ค่าเริ่มต้น `MONTHLY_SPEND_CAP_USD=5.00`, `IMAGE_ESTIMATE_USD=0.12`, `VOICE_ESTIMATE_USD=0.05`, `IMAGES_PER_REEL=3`
+ตาม **การประมาณในโค้ด** = `3×0.12+0.05 = $0.41` ต่อคลิป, 30 คลิป = `$12.30` ต่อเดือน โดยไม่รวมต้นทุนอื่นและ **ไม่ใช่ราคาปัจจุบันที่รับประกัน**.
+ดังนั้น $5 ไม่พอทำ 30 คลิปจริงตามประมาณการ; ระบบจะหยุดแทนที่จะเพิ่มงบเอง และค่าใช้จ่ายจริงจาก API อาจต่างจากประมาณมาก โปรดตั้ง Provider Budget/Alerts แยกต่างหาก
+`data/state.json` เก็บประวัติประมาณการเดือนปัจจุบัน; การรันซ้ำและข้อผิดพลาดของ `git push` อาจทำให้ยอดประมาณการไม่ครบถ้วน ไม่ใช่ hard spending limit ของ OpenAI
 
-Repo: https://github.com/suntornsaeyo-glitch/dream-home-vexa-reels
+## 5. ข้อกำหนด Affiliate / Meta
+- เนื้อหา Affiliate ต้องเปิดเผยว่าได้ค่าคอมมิชชัน และใช้ Paid partnership / branded content labeling ของ Meta เมื่อกฎและเครื่องมือบังคับ
+- โค้ดใส่ disclosure ใน Caption แต่ **การใส่ Caption อย่างเดียวไม่ได้แทนระบบติดป้าย Paid partnership บน Facebook** จำเป็นต้องตรวจสิทธิ์/วิธีติดป้ายก่อนโพสต์จริง
+- หลีกเลี่ยงการแสดงภาพ AI เป็นผลทดสอบของสินค้าจริง การรับรองสินค้า หรือคุณสมบัติที่ยังไม่ตรวจสอบ
+- การทำ Facebook Native Affiliate tagging อาจต้องผูก Affiliate catalog/Brand ให้ Meta อนุญาต ระบบนี้เตรียมลิงก์ใน caption เท่านั้น ยังไม่ได้ทำ native commerce tagging
+- ห้ามเผยแพร่ Facebook อัตโนมัติก่อนตรวจ Meta Permissions, Product/Link Compliance, video processing, page and URL, duplicate guard และแสดง label ถูกต้อง
+
+## 6. ขั้นตอนต่อไป
+1. เพิ่มสินค้า Affiliate จริง 3–5 รายการที่คุณได้รับสิทธิ์โปรโมต
+2. ทดสอบ `dry_run=true` และตรวจ Caption
+3. ทดสอบ `dry_run=false` 1 ครั้งเพื่อดูภาพและเสียง MP4
+4. ส่งผลลัพธ์มาปรับแนวสคริปต์และความต่อเนื่องของฉาก
+5. เชื่อม Meta App/Page Token เมื่อคุณพร้อม แล้วตรวจ disclosure/paid partnership ก่อนเปิด live publish
+
+Repository: https://github.com/suntornsaeyo-glitch/dream-home-vexa-reels
