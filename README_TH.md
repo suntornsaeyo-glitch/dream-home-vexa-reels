@@ -1,73 +1,39 @@
-# Vexa Viral — AI Reels + Facebook Affiliate
+# Vexa Viral Thailand — Shopee Affiliate
 
-**สถานะ:** โค้ดบน GitHub อัปเดตแล้ว แต่ Facebook Auto Publish ยังถูกล็อกเป็น `false` ใน GitHub Actions และยังไม่ได้ยืนยันการโพสต์จริง
+ระบบสร้างคลิปตลกและคอนเทนต์ Affiliate ภาษาไทย วันละหนึ่งคลิปบน GitHub Actions (ประมาณ 17:17 เวลาไทย อาจล่าช้า) โดยใช้ภาพ AI แบบซูม/แพน เสียงพากย์ TTS ภาษาไทย และ MP4 1080×1920 ไม่ใช่วิดีโอ AI ที่ตัวละครเคลื่อนไหวจริงหรือระบบซับไตเติลตามเสียงแบบอัตโนมัติ
 
-## เป้าหมาย
-- ภาษาอังกฤษ วันละ 1 MP4 แนวตั้ง 1080x1920 เมื่อ API สำเร็จและมีงบประมาณพอ
-- ภาพ AI 3 ฉาก + เสียงบรรยาย AI + Caption + Hashtags
-- 70% Affiliate entertainment / 30% viral comedy เมื่อมีสินค้าที่อนุมัติแล้ว
-- ถ้า `data/affiliate_products.json` ยังไม่มีสินค้าที่ตรวจสอบผ่าน จะสร้าง **คลิปตลกปกติ** โดยไม่มีลิงก์ Affiliate หรือตัวเลขคอมมิชชันที่แต่งขึ้น
-- ภาพเคลื่อนไหวแบบซูมและแพนจากภาพนิ่ง AI ไม่ใช่ตัวละครพูดขยับปากหรือ full AI-video
+## การเพิ่มสินค้า
+บัญชี Shopee Affiliate ของเจ้าของได้รับอนุมัติแล้ว แต่ระบบยังไม่ได้รับสิทธิ์ Shopee Open API และยังไม่มีลิงก์สินค้าจริง
 
-## 1. เพิ่มสินค้า Affiliate ที่ได้รับอนุมัติ
-เปิด `data/affiliate_products.json` แล้วเพิ่มรายการที่ **มีลิงก์จากบัญชี Affiliate ของคุณเอง** ตัวอย่างโครงสร้าง (เป็นตัวอย่างช่องข้อมูล ไม่ใช่ลิงก์ใช้งานจริง):
+แก้ data/affiliate_products.json โดยเพิ่มรายการที่ได้รับอนุญาตใน products:
+- id: รหัสสินค้าภายในที่ไม่ซ้ำ
+- title: ชื่อสินค้าจริงภาษาไทย
+- category: home_gadgets, pet_gadgets, kitchen_gadgets, desk_gadgets, funny_gifts หรือ tech_accessories
+- program: Shopee Thailand
+- affiliate_url: ลิงก์ HTTPS จากแดชบอร์ด Affiliate ของเจ้าของเท่านั้น
+- visual_description: คำอธิบายประเภทอุปกรณ์ทั่วไปภาษาไทย
+- usage_rights_confirmed: true เมื่อตรวจสิทธิ์ใช้ข้อมูลและสื่อแล้ว
+- approved: true เมื่อเจ้าของตรวจสอบสินค้าและลิงก์แล้ว
 
-```json
-{
-  "products": [
-    {
-      "id": "your-unique-product-id",
-      "title": "Actual Product Listing Title",
-      "category": "pet_gadgets",
-      "affiliate_url": "https://YOUR-REAL-AFFILIATE-LINK",
-      "program": "Your Affiliate Program",
-      "visual_description": "generic pet feeding gadget as a fictional prop",
-      "usage_rights_confirmed": true,
-      "approved": true
-    }
-  ]
-}
-```
+ระบบตรวจรูปแบบและโดเมน Shopee ไม่ได้ตรวจปลายทางสต็อก ราคา การติดตามค่าคอมมิชชัน หรือสิทธิ์บัญชีแบบสด ต้องยืนยันด้วยแดชบอร์ด Shopee จริง ห้ามใส่ API key หรือ token ในไฟล์สาธารณะ
+หากไม่มีสินค้าที่อนุมัติ จะสร้างคลิปตลกทั่วไปโดยไม่มีลิงก์ปลอม เมื่อมีสินค้า จะหมุนเวียนวัน Affiliate 70% และตลกทั่วไป 30%
 
-หมวดหมู่ที่อนุญาต: `home_gadgets`, `pet_gadgets`, `kitchen_gadgets`, `desk_gadgets`, `funny_gifts`, `tech_accessories`
+## การทดสอบ
+Actions > Vexa Viral Thailand - Shopee Affiliate > Run workflow
+- dry_run=true: ทดสอบบทไทย แคปชันและแผน ไม่เรียก API เสียเงิน ไม่สร้าง MP4
+- dry_run=false (ค่าเริ่มต้น): สร้าง MP4 ด้วย API จริง มีค่าใช้จ่าย
+- allow_regenerate=false (ค่าเริ่มต้น): ไม่สร้างซ้ำหลังบันทึกความสำเร็จในวันที่เดียวกัน ใช้ true เฉพาะต้องการสร้างซ้ำและยอมรับค่าใช้จ่าย
+- Workflow ตรวจ syntax และ unit tests ก่อนเรียก API
+- Artifacts: reel.mp4, voice.mp3, caption.txt, narration.txt, metadata.json
+- เสียงไทยใช้ OpenAI TTS พร้อมคำสั่งออกเสียงธรรมชาติ ไม่ย้อนกลับไปใช้เสียงอังกฤษเมื่อผิดพลาด
 
-ห้ามใช้ตัวอย่างลิงก์ด้านบนจริง, ห้ามใส่ลิงก์ที่ไม่ได้รับจากโปรแกรม Affiliate หรือสินค้าที่ไม่ได้ตรวจสอบเงื่อนไขโปรโมต
-ค่า `usage_rights_confirmed` หมายถึงคุณยืนยันว่ามีสิทธิ์ใช้ข้อมูล/สื่อประกอบตามที่โปรแกรมอนุญาต ไม่ใช่การซื้อสิทธิ์จากโค้ดนี้
-**เมื่อไม่มีสินค้า approved ที่มี URL HTTPS ถูกต้อง ระบบจะไม่แต่งลิงก์ให้เอง**
+## งบ
+เก็บประมาณการเดิมใน data/state.json; default $5/เดือน, 3 ภาพ x $0.12 + เสียง $0.05 + Gemini $0.01 เมื่อมี key = $0.42 ต่อคลิปตามสมมติฐาน (30 คลิป $12.60)
+ตรวจงบก่อนเรียก API และบันทึกก่อนแต่ละ call ตัวเลขนี้ไม่ใช่ใบแจ้งหนี้หรือ hard limit ของผู้ให้บริการ และหาก GitHub commit ล้มเหลวอาจบันทึกไม่ครบ ต้องตรวจ billing จริง
+ไม่เพิ่มเพดานงบโดยอัตโนมัติ
 
-## 2. ขั้นตอนสร้างคลิป
-1. GitHub Actions เริ่มราว 17:17 เวลาไทย (อาจล่าช้าหรือรันไม่ตรงเวลา)
-2. เลือกหัวข้อ 30 ตอนหมุนเวียน; หากเป็นวัน Affiliate และมีสินค้าที่ผ่าน validation เลือกรายการสินค้า
-3. Gemini เขียนบทภาษาอังกฤษให้เป็นมุกตลก หากไม่ตอบจะใช้บทสำรอง
-4. OpenAI Image API สร้าง 3 ภาพ AI, TTS สร้างเสียงตลกอังกฤษ, FFmpeg ทำคลิป `reel.mp4` (ไม่ใช่ generative moving video)
-5. บันทึก `caption.txt`, `narration.txt`, `metadata.json` และ MP4 ใน Artifacts 7 วัน
-6. **ไม่โพสต์ Facebook:** ทั้ง `ENABLE_PUBLISH` และ `FB_LIVE_APPROVED` ถูกบังคับ `false` ใน Workflow
-
-## 3. การทดสอบ
-เปิด GitHub Actions → `Vexa Viral AI Reels + Affiliate` → Run workflow
-- `dry_run = true`: ไม่เสียค่า Image/TTS API สร้าง `preview_plan.json`, caption, narration แต่ยังไม่มี MP4
-- `dry_run = false`: ทดสอบ MP4 จริง (มีค่าใช้จ่าย) และยัง **ไม่โพสต์ Facebook**
-- Workflow ตรวจ `python -m py_compile` และรัน `tests/test_affiliate.py` ก่อนใช้ API
-- หากมีข้อผิดพลาด ดู Logs และตรวจงบก่อนรันซ้ำ เพราะอาจคิดค่า API ไปแล้วบางส่วน
-
-## 4. งบประมาณ
-ค่าเริ่มต้น `MONTHLY_SPEND_CAP_USD=5.00`, `IMAGE_ESTIMATE_USD=0.12`, `VOICE_ESTIMATE_USD=0.05`, `IMAGES_PER_REEL=3`
-ตาม **การประมาณในโค้ด** = `3×0.12+0.05 = $0.41` ต่อคลิป, 30 คลิป = `$12.30` ต่อเดือน โดยไม่รวมต้นทุนอื่นและ **ไม่ใช่ราคาปัจจุบันที่รับประกัน**.
-ดังนั้น $5 ไม่พอทำ 30 คลิปจริงตามประมาณการ; ระบบจะหยุดแทนที่จะเพิ่มงบเอง และค่าใช้จ่ายจริงจาก API อาจต่างจากประมาณมาก โปรดตั้ง Provider Budget/Alerts แยกต่างหาก
-`data/state.json` เก็บประวัติประมาณการเดือนปัจจุบัน; การรันซ้ำและข้อผิดพลาดของ `git push` อาจทำให้ยอดประมาณการไม่ครบถ้วน ไม่ใช่ hard spending limit ของ OpenAI
-
-## 5. ข้อกำหนด Affiliate / Meta
-- เนื้อหา Affiliate ต้องเปิดเผยว่าได้ค่าคอมมิชชัน และใช้ Paid partnership / branded content labeling ของ Meta เมื่อกฎและเครื่องมือบังคับ
-- โค้ดใส่ disclosure ใน Caption แต่ **การใส่ Caption อย่างเดียวไม่ได้แทนระบบติดป้าย Paid partnership บน Facebook** จำเป็นต้องตรวจสิทธิ์/วิธีติดป้ายก่อนโพสต์จริง
-- หลีกเลี่ยงการแสดงภาพ AI เป็นผลทดสอบของสินค้าจริง การรับรองสินค้า หรือคุณสมบัติที่ยังไม่ตรวจสอบ
-- การทำ Facebook Native Affiliate tagging อาจต้องผูก Affiliate catalog/Brand ให้ Meta อนุญาต ระบบนี้เตรียมลิงก์ใน caption เท่านั้น ยังไม่ได้ทำ native commerce tagging
-- ห้ามเผยแพร่ Facebook อัตโนมัติก่อนตรวจ Meta Permissions, Product/Link Compliance, video processing, page and URL, duplicate guard และแสดง label ถูกต้อง
-
-## 6. ขั้นตอนต่อไป
-1. เพิ่มสินค้า Affiliate จริง 3–5 รายการที่คุณได้รับสิทธิ์โปรโมต
-2. ทดสอบ `dry_run=true` และตรวจ Caption
-3. ทดสอบ `dry_run=false` 1 ครั้งเพื่อดูภาพและเสียง MP4
-4. ส่งผลลัพธ์มาปรับแนวสคริปต์และความต่อเนื่องของฉาก
-5. เชื่อม Meta App/Page Token เมื่อคุณพร้อม แล้วตรวจ disclosure/paid partnership ก่อนเปิด live publish
-
-Repository: https://github.com/suntornsaeyo-glitch/dream-home-vexa-reels
+## Facebook
+ENABLE_PUBLISH และ FB_LIVE_APPROVED ถูกบังคับ false ใน workflow แม้ตั้ง variables ไว้แล้ว
+ยังไม่เชื่อมเพจและยังไม่ทดสอบเผยแพร่จริง เตรียม FB_PAGE_ID และ FB_PAGE_ACCESS_TOKEN ผ่าน GitHub Secrets เท่านั้น
+ก่อนเปิดเผยแพร่ต้องตรวจสิทธิ์ Meta, การติดป้ายความสัมพันธ์เชิงพาณิชย์ตามกฎที่ใช้, ลิงก์ Affiliate และระบบติดแท็กสินค้า Shopee (ยังไม่ได้เชื่อม native product tags)
+คลิปและ caption ระบุเรื่องสมมติจาก AI ไม่ใช่รีวิวหรือการทดสอบสินค้าจริง ไม่แต่งราคา สรรพคุณ หรือผลทดลอง
