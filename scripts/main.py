@@ -6,6 +6,7 @@ import base64, datetime as dt, json, math, os, random, re, subprocess, sys, time
 from pathlib import Path
 import requests
 from PIL import Image, ImageDraw, ImageFont, ImageEnhance
+from affiliate import approved_products, select_affiliate, affiliate_story, affiliate_caption
 
 ROOT=Path(__file__).resolve().parents[1]; OUT=ROOT/'output'; OUT.mkdir(exist_ok=True)
 STATE=ROOT/'data/state.json'; TZ=dt.timezone(dt.timedelta(hours=7))
@@ -65,7 +66,7 @@ def reserve(state, amount, service):
     state['spent_estimate_by_month'][MONTH]=round(current+amount,5); save_state(state)
     print(f'Reserved estimate ${amount:.3f} for {service}; estimated month total ${current+amount:.3f} (not verified billing)')
 
-def gemini_script(title,desc,punchline,genre):
+def gemini_script(title,desc,punchline,genre,affiliate=None):
     fallback=(f'Okay, nobody expected this. {desc.capitalize()}. '
        'At first, everything seems perfectly normal. Then the situation gets more ridiculous by the second. '
        f'Just when everyone thinks it cannot get stranger, {punchline[0].lower()+punchline[1:]} '
@@ -78,7 +79,10 @@ def gemini_script(title,desc,punchline,genre):
           f'Genre: {genre}; title: {title}; premise: {desc}; mandatory final punchline: {punchline}. '
           'Structure: irresistible first-2-second hook, setup, escalating ridiculous twist, punchline in final sentence. '
           'Fun, punchy, naturally spoken American English, family friendly, no real-world misinformation, '
-          'no copyrighted characters, no hateful or sexual jokes, no real celebrities, no speech labels, narration only.')
+          'no copyrighted characters, no hateful or sexual jokes, no real celebrities, no speech labels, narration only. '
+          +(f'This is a fictional AI skit featuring a generic prop in the category {affiliate["category"]}. '
+            'Never claim the product was tested, works as shown, solves problems, or has any verified feature or price. '
+            'Do not create an endorsement or review.' if affiliate else ''))
         r=requests.post(url,headers={'x-goog-api-key':key},json={'contents':[{'parts':[{'text':prompt}]}],
                     'generationConfig':{'temperature':0.95,'maxOutputTokens':260}},timeout=35)
         if not r.ok:
@@ -187,20 +191,25 @@ def main():
         print('Already published this date; refusing duplicate.'); return
     idx=(dt.date.fromisoformat(TODAY)-dt.date(2026,11,21)).days%len(TOPICS)
     genre,title,desc,punchline=TOPICS[idx]
+    products=approved_products()
+    affiliate=select_affiliate(TODAY,products)
+    if affiliate:
+        genre,title,desc,punchline=affiliate_story(affiliate)
     if envbool('DRY_RUN'):
-        caption=create_caption(title,desc,genre,punchline)
+        caption=affiliate_caption(title,affiliate) if affiliate else create_caption(title,desc,genre,punchline)
         narration=(f'Okay, nobody expected this. {desc.capitalize()}. '
                    f'Then things got really weird. {punchline}')
         (OUT/'caption.txt').write_text(caption,encoding='utf-8')
         (OUT/'narration.txt').write_text(narration,encoding='utf-8')
         (OUT/'preview_plan.json').write_text(json.dumps({
             'brand':'Vexa Viral','genre':genre,'title':title,'premise':desc,
+            'affiliate_id':affiliate['id'] if affiliate else None,'affiliate_ready':bool(affiliate),
             'punchline':punchline,'caption':caption,'mode':'OFFLINE DRY RUN',
             'api_calls':0,'facebook_publish':False
         },ensure_ascii=False,indent=2),encoding='utf-8')
         print('OFFLINE DRY RUN: output/preview_plan.json; no paid API or Facebook request')
         return
-    narration,script_source=gemini_script(title,desc,punchline,genre)
+    narration,script_source=gemini_script(title,desc,punchline,genre,affiliate)
     (OUT/'narration.txt').write_text(narration)
     key=os.getenv('OPENAI_API_KEY','')
     if not key: raise RuntimeError('OPENAI_API_KEY missing: Entertainment mode needs a valid image API key.')
@@ -225,7 +234,8 @@ def main():
         'consistent character face, costume, proportions and location across all scenes. '
         'High production value, cinematic lighting, 35mm lens, bold visual staging, vibrant attractive colors, '
         'portrait 2:3 composition, no real people or celebrities, no brand logos, no signs, no subtitles, '
-        'no lettering, no collage, no watermarks. Clearly imaginative fiction.')
+        'no lettering, no collage, no watermarks. Clearly imaginative fiction. '
+        +'NEVER portray a generic gadget as a factual product demonstration or invent performance results.')
     reference=None
     for i in range(images_n):
         image_path=OUT/f'photo_{i}.png'
@@ -248,9 +258,9 @@ def main():
     else:
         fallback_voice(narration,voice_path); voice_source='eSpeak backup'
     result=OUT/'reel.mp4'; assemble(frames,voice_path,result)
-    caption=create_caption(title,desc,genre,punchline)
+    caption=affiliate_caption(title,affiliate) if affiliate else create_caption(title,desc,genre,punchline)
     (OUT/'caption.txt').write_text(caption,encoding='utf-8')
-    meta={'date':TODAY,'title':title,'genre':genre,'caption':caption,'script_source':script_source,'voice_source':voice_source,'images':images_n,'brand':'Vexa Viral','estimated_run_usd':round(remaining,4),
+    meta={'date':TODAY,'title':title,'genre':genre,'caption':caption,'script_source':script_source,'voice_source':voice_source,'images':images_n,'brand':'Vexa Viral','affiliate_id':affiliate['id'] if affiliate else None,'affiliate_ready':bool(affiliate),'estimated_run_usd':round(remaining,4),
           'estimated_month_usd':state['spent_estimate_by_month'].get(MONTH),'NOTE':'Illustrated video with Ken Burns motion, NOT native AI video. Estimates are not billed amounts; confirm provider limits.'}
     (OUT/'metadata.json').write_text(json.dumps(meta,indent=2))
     print('SUCCESS: created',result,'bytes',result.stat().st_size, 'VOICE',voice_source)
