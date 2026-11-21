@@ -12,36 +12,26 @@ ROOT=Path(__file__).resolve().parents[1]; OUT=ROOT/'output'; OUT.mkdir(exist_ok=
 STATE=ROOT/'data/state.json'; TZ=dt.timezone(dt.timedelta(hours=7))
 TODAY=dt.datetime.now(TZ).date().isoformat(); MONTH=TODAY[:7]
 TOPICS=[
-    ("Funny Animals", "My Cat Became the CEO", "a serious orange cat in a tiny business suit running an office full of confused humans", "The cat's first company rule: meetings are replaced by naps."),
-    ("Absurd Comedy", "The Banana That Called the Police", "a talking banana at a grocery store reporting an outrageous crime", "Someone peeled its best friend."),
-    ("AI Memes", "When Your Alarm Clock Quits", "an expressive alarm clock storming out of a messy bedroom carrying a suitcase", "Even the alarm needs a day off."),
-    ("Comedy Stories", "The Robot Who Tried to Cook", "a friendly household robot proudly cooking a wildly chaotic breakfast", "The smoke alarm becomes the food critic."),
-    ("Funny Animals", "Dog Applies for a Human Job", "a fluffy golden dog giving a confident job interview in a modern office", "His only requested salary is unlimited treats."),
-    ("Absurd Comedy", "Giant Pineapple at the Bus Stop", "a giant friendly pineapple politely waiting among ordinary commuters", "The bus driver says no food allowed."),
-    ("AI Memes", "My Wi-Fi Has Feelings", "a home internet router acting like a dramatic soap opera star", "It disconnects whenever someone calls it slow."),
-    ("Comedy Stories", "The World's Worst Time Traveler", "a hapless time traveler arriving five minutes early to the wrong party", "He invented time travel just to be late again."),
-    ("Funny Animals", "A Penguin at the Gym", "a determined penguin training beside oversized bodybuilders", "The penguin's secret workout is sliding to the snacks."),
-    ("Absurd Comedy", "A Potato Becomes President of the Fridge", "a regal potato addressing vegetables inside a refrigerator", "Every vegetable votes yes except the French fries."),
-    ("AI Memes", "When Monday Becomes a Person", "a grumpy personified Monday appearing at a bright weekend picnic", "Everyone tries to hide behind Tuesday."),
-    ("Comedy Stories", "The Ghost Who Is Afraid of Humans", "a harmless translucent cartoonish ghost nervously hiding in a charming old house", "The ghost screams louder than its visitors."),
-    ("Funny Animals", "The Cat Who Stole the Weather Forecast", "a sophisticated tuxedo cat presenting weather on a TV studio set", "The forecast is ninety percent chance of naps."),
-    ("Absurd Comedy", "An Avocado Opens a Spa", "a smiling avocado running a luxury wellness spa for vegetables", "The cucumber requests a face mask."),
-    ("AI Memes", "My Phone Is Jealous of My Laptop", "a phone and laptop portrayed as expressive fictional tech characters on a desk", "The phone starts sending itself notifications."),
-    ("Comedy Stories", "A Superhero With One Useless Power", "a kind superhero in an original colorful costume saving a city in tiny unhelpful ways", "Their superpower is finding lost socks."),
-    ("Funny Animals", "The Office Hamster Gets Promoted", "a tiny hamster in a CEO chair with a massive desk and employees", "The hamster immediately schedules a wheel meeting."),
-    ("Absurd Comedy", "A Watermelon Joins the Police", "a cheerful watermelon police officer directing traffic in a fictional city", "The watermelon issues a ticket for speeding smoothies."),
-    ("AI Memes", "When Your Coffee Talks Back", "a paper coffee cup with expressive face in a sleepy home kitchen", "It refuses to wake up before its owner."),
-    ("Comedy Stories", "The Alien Who Loves Earth Snacks", "a cute original alien visiting a convenience store for the first time", "It travels galaxies to buy potato chips."),
-    ("Funny Animals", "Grandma Duck vs Smart Home", "an elderly duck trying to command a futuristic voice-controlled house", "The house only understands quack."),
-    ("Absurd Comedy", "The Giant Donut Escape", "a huge runaway donut rolling through a pastel city street", "The police officer follows with a cup of coffee."),
-    ("AI Memes", "When Your Fridge Judges You", "a refrigerator with a skeptical expressive face watching midnight snacking", "It turns the light off in disappointment."),
-    ("Comedy Stories", "A Wizard Who Forgot His Password", "a funny original wizard trying to unlock a glowing magic spellbook", "The password hint is abracadabra123."),
-    ("Funny Animals", "A Dog Hosts a Cooking Show", "a corgi wearing chef clothes presenting a ridiculous TV food show", "Every recipe ends with dog biscuits."),
-    ("Absurd Comedy", "An Angry Lemon at the Restaurant", "an expressive lemon complaining to a waiter in a whimsical cafe", "The waiter asks it to stop being sour."),
-    ("AI Memes", "My Vacuum Cleaner Wants a Vacation", "a robot vacuum with a tiny beach hat escaping across a living room", "It refuses to clean another crumb."),
-    ("Comedy Stories", "The Most Polite Monster Ever", "a giant gentle original fuzzy monster carefully navigating a crowded city", "It apologizes to every building it bumps."),
-    ("Funny Animals", "A Cat Opens a Luxury Hotel", "a smug fluffy cat welcoming guests to an extravagant fictional pet hotel", "Check-in requires a belly rub."),
-    ("Absurd Comedy", "The Great Fruit Dance-Off", "original lively fruit characters competing in a colorful dance competition", "The banana slips before the music even starts."),
+    ("สัตว์ตลก", "เมื่อแมวเป็นประธานบริษัท", "แมวส้มใส่สูทนั่งประชุมในออฟฟิศ พนักงานมองด้วยความงุนงง", "กฎข้อแรกของบริษัทคือเปลี่ยนเวลาประชุมเป็นเวลานอน"),
+    ("เรื่องเหนือจริง", "กล้วยแจ้งตำรวจ", "กล้วยพูดได้เดินเข้าโรงพักด้วยสีหน้าตกใจ", "เพื่อนของมันถูกปอกเปลือก"),
+    ("มีม", "นาฬิกาปลุกขอลาออก", "นาฬิกาปลุกมีชีวิตลากกระเป๋าเดินทางออกจากห้องนอน", "แม้แต่นาฬิกาปลุกก็อยากนอนต่อ"),
+    ("เรื่องหักมุม", "หุ่นยนต์เข้าครัว", "หุ่นยนต์พ่อครัวกำลังทำอาหารเช้าในครัวแสนวุ่นวาย", "เครื่องตรวจจับควันกลายเป็นกรรมการชิมอาหาร"),
+    ("สัตว์ตลก", "หมาไปสมัครงาน", "สุนัขโกลเด้นนั่งสัมภาษณ์งานอย่างมั่นใจ", "เงินเดือนที่ขอคือขนมไม่จำกัด"),
+    ("เรื่องเหนือจริง", "สับปะรดยักษ์รอรถเมล์", "สับปะรดยักษ์ยืนต่อแถวรอรถเมล์กับคนทั่วไป", "คนขับบอกว่าห้ามนำอาหารขึ้นรถ"),
+    ("มีม", "ไวไฟก็มีหัวใจ", "เราเตอร์มีชีวิตทำท่าเหมือนตัวเอกละครน้ำเน่า", "พอใครบอกว่าเน็ตช้ามันก็ตัดสัญญาณทันที"),
+    ("เรื่องหักมุม", "นักเดินทางข้ามเวลาสายเสมอ", "นักเดินทางข้ามเวลามาถึงงานเลี้ยงผิดวัน", "ประดิษฐ์เครื่องย้อนเวลาแล้วก็ยังมาสาย"),
+    ("สัตว์ตลก", "เพนกวินเข้าฟิตเนส", "เพนกวินออกกำลังกายท่ามกลางนักกล้าม", "ท่าที่ถนัดที่สุดคือไถลไปหาขนม"),
+    ("เรื่องเหนือจริง", "มันฝรั่งเป็นประธานตู้เย็น", "มันฝรั่งสวมมงกุฎกล่าวสุนทรพจน์ในตู้เย็น", "ทุกคนโหวตให้ยกเว้นเฟรนช์ฟรายส์"),
+    ("มีม", "วันจันทร์มาปิกนิก", "ตัวละครวันจันทร์หน้าบึ้งโผล่กลางงานปิกนิกวันหยุด", "ทุกคนวิ่งไปหลบหลังวันอังคาร"),
+    ("เรื่องหักมุม", "ผีที่กลัวคน", "ผีน้อยน่ารักซ่อนอยู่ในบ้านเก่าเมื่อมีแขกมาเยือน", "ผีร้องดังยิ่งกว่าแขก"),
+    ("สัตว์ตลก", "แมวพยากรณ์อากาศ", "แมวดำขาวยืนหน้ากล้องในสตูดิโอข่าวอากาศ", "วันนี้มีโอกาสนอนเก้าสิบเปอร์เซ็นต์"),
+    ("เรื่องเหนือจริง", "อะโวคาโดเปิดสปา", "อะโวคาโดมีชีวิตเปิดสปาหรูสำหรับผัก", "แตงกวาขอมาสก์หน้า"),
+    ("มีม", "มือถือหึงโน้ตบุ๊ก", "มือถือและโน้ตบุ๊กมีชีวิตเถียงกันบนโต๊ะทำงาน", "มือถือส่งแจ้งเตือนให้ตัวเองทั้งวัน"),
+    ("เรื่องหักมุม", "ฮีโร่พลังตามหาถุงเท้า", "ซูเปอร์ฮีโร่ชุดต้นฉบับพยายามช่วยชาวเมือง", "พลังพิเศษคือหาถุงเท้าหายได้ทุกคู่"),
+    ("สัตว์ตลก", "แฮมสเตอร์ได้เลื่อนตำแหน่ง", "แฮมสเตอร์ตัวจิ๋วนั่งเก้าอี้ผู้บริหารตัวใหญ่", "คำสั่งแรกคือนัดประชุมบนวงล้อ"),
+    ("เรื่องเหนือจริง", "แตงโมเป็นตำรวจจราจร", "แตงโมมีชีวิตโบกรถในเมืองสมมติ", "มันแจกใบสั่งให้สมูทตี้ที่ขับเร็ว"),
+    ("มีม", "กาแฟเถียงเจ้าของ", "แก้วกาแฟมีชีวิตคุยกับเจ้าของที่ยังง่วงในครัว", "กาแฟบอกว่าตัวเองก็ยังไม่ตื่น"),
+    ("เรื่องหักมุม", "เอเลี่ยนตามหาขนม", "เอเลี่ยนน่ารักเข้าร้านสะดวกซื้อครั้งแรก", "ข้ามกาแล็กซีมาซื้อแค่มันฝรั่งทอด"),
 ]
 
 def envbool(k, default=False): return os.getenv(k,str(default)).lower() in ('1','true','yes')
@@ -66,31 +56,33 @@ def reserve(state, amount, service):
     state['spent_estimate_by_month'][MONTH]=round(current+amount,5); save_state(state)
     print(f'Reserved estimate ${amount:.3f} for {service}; estimated month total ${current+amount:.3f} (not verified billing)')
 
+def thai_fallback(title,desc,punchline,affiliate=None):
+    text=f'เรื่องมันเริ่มจาก{desc} แล้วความวุ่นวายก็เกิดขึ้น ใครจะคิดว่า{punchline}'
+    if affiliate:
+        text += ' นี่เป็นเรื่องสมมติจากเอไอ ไม่ใช่การทดลองสินค้าจริง สนใจสินค้าที่เกี่ยวข้องดูรายละเอียดจากลิงก์ช้อปปี้ได้ เพจอาจได้รับค่าคอมมิชชัน'
+    return text
+
 def gemini_script(title,desc,punchline,genre,affiliate=None):
-    fallback=(f'Okay, nobody expected this. {desc.capitalize()}. '
-       'At first, everything seems perfectly normal. Then the situation gets more ridiculous by the second. '
-       f'Just when everyone thinks it cannot get stranger, {punchline[0].lower()+punchline[1:]} '
-       'That is one way to solve a problem.')
+    fallback=thai_fallback(title,desc,punchline,affiliate)
     key=os.getenv('GEMINI_API_KEY','')
     if not key: return fallback,'template'
     try:
-        url='https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent'
-        prompt=(f'Create a 45-65 word ORIGINAL English comedy voiceover for a 25-40 second Facebook Reel. '
-          f'Genre: {genre}; title: {title}; premise: {desc}; mandatory final punchline: {punchline}. '
-          'Structure: irresistible first-2-second hook, setup, escalating ridiculous twist, punchline in final sentence. '
-          'Fun, punchy, naturally spoken American English, family friendly, no real-world misinformation, '
-          'no copyrighted characters, no hateful or sexual jokes, no real celebrities, no speech labels, narration only. '
-          +(f'This is a fictional AI skit featuring a generic prop in the category {affiliate["category"]}. '
-            'Never claim the product was tested, works as shown, solves problems, or has any verified feature or price. '
-            'Do not create an endorsement or review.' if affiliate else ''))
-        r=requests.post(url,headers={'x-goog-api-key':key},json={'contents':[{'parts':[{'text':prompt}]}],
-                    'generationConfig':{'temperature':0.95,'maxOutputTokens':260}},timeout=35)
-        if not r.ok:
-            print('Gemini unavailable; using local comic voiceover. HTTP',r.status_code)
-            return fallback,'template'
-        txt=r.json()['candidates'][0]['content']['parts'][0]['text'].strip()
-        if 35<=len(txt.split())<=95: return txt,'gemini'
-    except Exception as e: print('Gemini fallback:',str(e)[:140])
+        prompt=(f'เขียนบทพากย์ภาษาไทยธรรมชาติสำหรับคลิปตลก 20 ถึง 35 วินาที หัวข้อ {title} '
+          f'เหตุการณ์ {desc} จุดหักมุม {punchline} เปิดเรื่องให้น่าสนใจ ใช้ภาษาพูดทั่วไป '
+          'ตอบเฉพาะบทพากย์ภาษาไทย ไม่ต้องใส่ชื่อผู้พูด ไม่ล้อเลียนบุคคลจริง '
+          'ไม่ใช้เนื้อหาอันตรายหรืออ้างข้อมูลเท็จ '
+          +('เป็นเรื่องสมมติจากเอไอเกี่ยวกับอุปกรณ์ทั่วไป ห้ามอ้างสรรพคุณ ราคา ผลทดลอง หรือรีวิวจริง' if affiliate else ''))
+        r=requests.post('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent',
+          headers={'x-goog-api-key':key},json={'contents':[{'parts':[{'text':prompt}]}],
+          'generationConfig':{'temperature':0.85,'maxOutputTokens':600}},timeout=35)
+        if r.ok:
+            txt=r.json()['candidates'][0]['content']['parts'][0]['text'].strip()
+            if 60<=len(txt)<=480 and len(re.findall('[ก-๙]',txt))>=40:
+                if affiliate:
+                    txt += ' นี่เป็นเรื่องสมมติจากเอไอ ไม่ใช่รีวิวจริง ดูสินค้าที่เกี่ยวข้องจากลิงก์ช้อปปี้ เพจอาจได้รับค่าคอมมิชชัน'
+                return txt,'gemini'
+    except Exception:
+        print('Gemini unavailable; using Thai fallback')
     return fallback,'template'
 
 def openai_image(key,prompt,file):
@@ -113,20 +105,14 @@ def openai_image_reference(key,prompt,reference,file):
     with Image.open(file) as im: im.verify()
 
 def create_caption(title,desc,genre,punchline):
-    tags=['#VexaViral','#FunnyReels','#AIComedy']
-    if genre=='Funny Animals': tags+=['#FunnyAnimals','#AnimalComedy']
-    elif genre=='Absurd Comedy': tags+=['#AbsurdHumor','#SurrealComedy']
-    elif genre=='AI Memes': tags+=['#AIMemes','#RelatableMemes']
-    else: tags+=['#ComedyShorts','#FunnyStories']
-    return (f'{title}\n\n{desc.capitalize()}. '
-            f'Plot twist: {punchline} '
-            'Which character should return next?'
-            '\n\nAI-generated fictional comedy.\n\n'+' '.join(tags[:6]))
+    tags=['#VexaViral','#คลิปตลก','#ตลกเอไอ']
+    tags.append({'สัตว์ตลก':'#สัตว์ตลก','มีม':'#มีม','เรื่องเหนือจริง':'#เรื่องแปลก'}.get(genre,'#เรื่องหักมุม'))
+    return f'{title}\n\n{desc}\nดูให้จบแล้วจะรู้ว่าเกิดอะไรขึ้น!\n\nเรื่องสมมติจากเอไอ\n'+' '.join(tags)
 
 def voice(key,text,file):
     model=os.getenv('VOICE_MODEL','gpt-4o-mini-tts'); name=os.getenv('VOICE_NAME','onyx')
     payload={'model':model,'voice':name,'input':text,'response_format':'mp3','speed':0.96}
-    if model=='gpt-4o-mini-tts': payload['instructions']='Perform a fun English comedy narrator voiceover with a warm, expressive, natural American accent. Playful timing and micro-pauses before jokes. Clear delivery, lively but not shouty, entertaining and human-like. Let the last punchline land with a deliberate pause.'
+    if model=='gpt-4o-mini-tts': payload['instructions']='Speak native Central Thai with natural Thai pronunciation, tones and conversational rhythm. Friendly humorous Thai creator, expressive pauses before punchlines, no foreign accent, no exaggerated delivery. Read the Thai script exactly.'
     r=reqpost('https://api.openai.com/v1/audio/speech',headers={'Authorization':'Bearer '+key},json=payload)
     if len(r.content)<3000: raise RuntimeError('Suspiciously short TTS audio')
     file.write_bytes(r.content)
@@ -150,17 +136,18 @@ def fit_canvas(inp,out,title,subtitle):
         left=(nw-W)//2; top=(nh-H)//2; im=im.crop((left,top,left+W,top+H))
         overlay=Image.new('RGBA',(W,H),(0,0,0,0)); d=ImageDraw.Draw(overlay)
         d.rounded_rectangle((52,92,1028,270),radius=28,fill=(7,21,28,184))
-        path='/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf'; path2='/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf'
+        path='/usr/share/fonts/truetype/tlwg/Garuda-Bold.ttf'; path2='/usr/share/fonts/truetype/tlwg/Garuda.ttf'
         f1=ImageFont.truetype(path,46); f2=ImageFont.truetype(path2,30); f3=ImageFont.truetype(path2,23)
         d.text((88,120),'VEXA VIRAL',font=f1,fill=(255,217,161))
         d.text((88,202),subtitle,font=f2,fill='white')
         d.rounded_rectangle((50,1773,1030,1860),radius=15,fill=(7,21,28,150))
-        d.text((82,1795),'AI-GENERATED FICTIONAL COMEDY',font=f3,fill='white')
+        d.text((82,1795),'เรื่องสมมติจากเอไอ ไม่ใช่การรีวิวจริง',font=f3,fill='white')
         Image.alpha_composite(im.convert('RGBA'),overlay).convert('RGB').save(out,quality=91)
 
 def assemble(frames,audio,out):
     # 3 large stills with slow Ken Burns effect; camera motion, NOT generative video.
-    sound_d=duration(audio); total=max(29.0,min(43.0,sound_d+2.3)); fps=24
+    sound_d=duration(audio); total=max(20.0,sound_d+1.5)
+    if total>60: raise RuntimeError('Thai narration exceeds 60 seconds; review before retry'); fps=24
     segments=[]
     for i,p in enumerate(frames):
         seconds=total/len(frames); count=math.ceil(seconds*fps)
@@ -197,8 +184,7 @@ def main():
         genre,title,desc,punchline=affiliate_story(affiliate)
     if envbool('DRY_RUN'):
         caption=affiliate_caption(title,affiliate) if affiliate else create_caption(title,desc,genre,punchline)
-        narration=(f'Okay, nobody expected this. {desc.capitalize()}. '
-                   f'Then things got really weird. {punchline}')
+        narration=thai_fallback(title,desc,punchline,affiliate)
         (OUT/'caption.txt').write_text(caption,encoding='utf-8')
         (OUT/'narration.txt').write_text(narration,encoding='utf-8')
         (OUT/'preview_plan.json').write_text(json.dumps({
@@ -209,8 +195,6 @@ def main():
         },ensure_ascii=False,indent=2),encoding='utf-8')
         print('OFFLINE DRY RUN: output/preview_plan.json; no paid API or Facebook request')
         return
-    narration,script_source=gemini_script(title,desc,punchline,genre,affiliate)
-    (OUT/'narration.txt').write_text(narration)
     key=os.getenv('OPENAI_API_KEY','')
     if not key: raise RuntimeError('OPENAI_API_KEY missing: Entertainment mode needs a valid image API key.')
     images_n=int(os.getenv('IMAGES_PER_REEL','3'))
@@ -218,15 +202,19 @@ def main():
     est_img=float(os.getenv('IMAGE_ESTIMATE_USD','0.12'))
     est_voice=float(os.getenv('VOICE_ESTIMATE_USD','0.05'))
     # Verify budget before any call, including voice; reserved amount persisted prior to calls.
-    remaining=images_n*est_img+est_voice
+    remaining=images_n*est_img+est_voice+(0.01 if os.getenv('GEMINI_API_KEY') else 0)
     cap=float(os.getenv('MONTHLY_SPEND_CAP_USD','5'))
     used=float(state['spent_estimate_by_month'].get(MONTH,0))
     if remaining+used>cap: raise RuntimeError(f'Estimated budget too low for this run: current ${used:.2f}, run ${remaining:.2f}, cap ${cap:.2f}')
+    if envbool('USE_PAID_VOICE',True) is False: raise RuntimeError('Thai TTS required')
+    if os.getenv('GEMINI_API_KEY'): reserve(state,0.01,'Gemini script estimate')
+    narration,script_source=gemini_script(title,desc,punchline,genre,affiliate)
+    (OUT/'narration.txt').write_text(narration,encoding='utf-8')
     frames=[]
     shots=[
-        ('THE SETUP',f'Wide cinematic comedy establishing shot. {desc}. Make the situation instantly readable.'),
-        ('IT GETS WORSE',f'Closer medium shot of EXACT SAME main character and matching location, escalating funny confusion from {desc}. Comedic visual storytelling.'),
-        ('PLOT TWIST',f'The EXACT SAME character and location in the hilarious punchline moment: {punchline}. Strong facial expression or comic physical action.')
+        ('เรื่องเริ่มขึ้น',f'Wide cinematic comedy establishing shot. {desc}. Make the situation instantly readable.'),
+        ('ความวุ่นวาย',f'Closer medium shot of EXACT SAME main character and matching location, escalating funny confusion from {desc}. Comedic visual storytelling.'),
+        ('จุดหักมุม',f'The EXACT SAME character and location in the hilarious punchline moment: {punchline}. Strong facial expression or comic physical action.')
     ]
     design_identity=(f'Original AI comedy series {genre}. TITLE {title}. '
         f'Main premise: {desc}. '
@@ -260,7 +248,7 @@ def main():
     result=OUT/'reel.mp4'; assemble(frames,voice_path,result)
     caption=affiliate_caption(title,affiliate) if affiliate else create_caption(title,desc,genre,punchline)
     (OUT/'caption.txt').write_text(caption,encoding='utf-8')
-    meta={'date':TODAY,'title':title,'genre':genre,'caption':caption,'script_source':script_source,'voice_source':voice_source,'images':images_n,'brand':'Vexa Viral','affiliate_id':affiliate['id'] if affiliate else None,'affiliate_ready':bool(affiliate),'estimated_run_usd':round(remaining,4),
+    meta={'date':TODAY,'title':title,'genre':genre,'caption':caption,'script_source':script_source,'voice_source':voice_source,'images':images_n,'brand':'Vexa Viral','language':'th-TH','affiliate_id':affiliate['id'] if affiliate else None,'affiliate_ready':bool(affiliate),'estimated_run_usd':round(remaining,4),
           'estimated_month_usd':state['spent_estimate_by_month'].get(MONTH),'NOTE':'Illustrated video with Ken Burns motion, NOT native AI video. Estimates are not billed amounts; confirm provider limits.'}
     (OUT/'metadata.json').write_text(json.dumps(meta,indent=2))
     print('SUCCESS: created',result,'bytes',result.stat().st_size, 'VOICE',voice_source)
