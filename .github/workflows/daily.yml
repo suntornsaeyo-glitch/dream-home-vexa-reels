@@ -1,4 +1,4 @@
-name: Vexa Viral AI Entertainment Reels
+name: Vexa Viral AI Reels + Affiliate
 on:
   workflow_dispatch:
     inputs:
@@ -46,9 +46,11 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y ffmpeg espeak-ng fonts-dejavu-core
           pip install -r requirements.txt
-      - name: Verify Python syntax (no paid API)
-        run: python -m py_compile scripts/main.py
-      - name: Produce entertainment preview (Facebook posting disabled)
+      - name: Verify Python syntax and affiliate rules (free)
+        run: |
+          python -m py_compile scripts/main.py scripts/affiliate.py
+          python -m unittest discover -s tests -v
+      - name: Produce English MP4 and affiliate-ready caption (Facebook disabled)
         run: python scripts/main.py
       - name: Commit estimate guard and successful publication state
         if: always()
