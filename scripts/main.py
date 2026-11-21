@@ -108,10 +108,10 @@ def create_caption(title,desc):
     if any(t in clean for t in ('tropical','garden','jungle')): tags.append('#TropicalHouse')
     if any(t in clean for t in ('kitchen','living')): tags.append('#InteriorDesign')
     if 'concrete' in clean: tags.append('#ModernHouse')
-    return (f'{title}\\n\\nA fresh AI-created home concept featuring {desc}. '
+    return (f'{title}\n\nA fresh AI-created home concept featuring {desc}. '
             'Step inside this imagined design tour. Which detail would you keep?'
-            '\\n\\nConcept visualization only — not a real property or verified construction plan.'
-            '\\n\\n'+' '.join(tags[:6]))
+            '\n\nConcept visualization only — not a real property or verified construction plan.'
+            '\n\n'+' '.join(tags[:6]))
 
 def voice(key,text,file):
     model=os.getenv('VOICE_MODEL','gpt-4o-mini-tts'); name=os.getenv('VOICE_NAME','onyx')
