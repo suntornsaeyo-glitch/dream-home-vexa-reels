@@ -1,189 +1,210 @@
-"""Dream Home Vexa free-first reel factory. Illustration-based, not photorealistic AI-video."""
-import datetime as dt
-import json
-import math
-import os
-import random
-import subprocess
+"""Dream Home Vexa V2: photographic AI stills, humanlike narration, Ken Burns videos.
+Use preview mode first. API charges are estimates, NOT an enforceable provider billing limit.
+"""
+from __future__ import annotations
+import base64, datetime as dt, json, math, os, random, re, subprocess, sys, time
 from pathlib import Path
-
 import requests
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont, ImageEnhance
 
-ROOT = Path(__file__).resolve().parents[1]
-OUT = ROOT / 'output'
-DATA = ROOT / 'data'
-STATE = DATA / 'state.json'
-OUT.mkdir(exist_ok=True)
-DATA.mkdir(exist_ok=True)
-TOPICS = [
-    'Two Bedrooms in a Tiny Dream Home', 'A Tiny Tropical Paradise',
-    'Concrete and Red Brick Dream House', 'A Small Home With a Big View',
-    'The Smartest Tiny House Layout', 'A Backyard Transformation Concept',
-    'A Minimalist House in the Jungle', 'One Floor Plan, Three Styles',
-    'The Dream Home With a Courtyard', 'A Tiny Pool Villa Concept',
-    'Modern Tropical House Design', 'A Home Built Around a Tree',
-    'Five Clever Small-Space Ideas', 'A Cozy Home in the Rain',
-    'A Futuristic Modular Dream Home', 'Concrete Versus Red Brick',
-    'A Narrow Lot Dream Home', 'The Ultimate Open-Plan Living Room',
-    'Tiny Kitchen, Smart Design', 'A Modern Home in the Mountains',
-    'A Dream Home Under the Stars', 'The Perfect Outdoor Terrace',
-    'A House Inspired by Nature', 'Three Amazing Tiny Home Concepts',
-    'A Simple Home With Warm Lighting', 'An Incredible Rooftop Garden',
-    'The Most Peaceful Tiny Retreat', 'A Hidden Garden Dream Home',
-    'The House of Tomorrow', 'The Best Dream Home Designs'
+ROOT=Path(__file__).resolve().parents[1]; OUT=ROOT/'output'; OUT.mkdir(exist_ok=True)
+STATE=ROOT/'data/state.json'; TZ=dt.timezone(dt.timedelta(hours=7))
+TODAY=dt.datetime.now(TZ).date().isoformat(); MONTH=TODAY[:7]
+TOPICS=[
+('Two Bedrooms in a Tiny Dream Home','compact two-bedroom tropical concrete house with red brick accent and landscaped courtyard'),
+('A Tiny Tropical Paradise','small luxury tropical bungalow with lush garden and plunge pool'),
+('Concrete and Red Brick Dream House','affordable minimal concrete house with artisanal exposed red brick details'),
+('A Small Home With a Big View','small contemporary hillside house with panoramic ocean view'),
+('The Smartest Tiny House Layout','clever small modern house with practical open-plan living area'),
+('A Backyard Transformation Concept','beautiful modern garden pavilion and landscaped backyard'),
+('A Minimalist House in the Jungle','minimalist tropical concrete house in a rain forest'),
+('One Floor Plan, Three Styles','modern contemporary single story home with timber and concrete'),
+('The Dream Home With a Courtyard','small house wrapped around a green central courtyard'),
+('A Tiny Pool Villa Concept','tiny single storey luxury villa next to a compact swimming pool'),
+('Modern Tropical House Design','contemporary tropical home with slatted timber shading'),
+('A Home Built Around a Tree','sustainable house wrapping around a preserved large tree'),
+('Five Clever Small-Space Ideas','ingenious compact luxury residential architecture'),
+('A Cozy Home in the Rain','warm tropical villa with a covered terrace in gentle rain'),
+('A Futuristic Modular Dream Home','realistic prefabricated modular eco house'),
+('Concrete Versus Red Brick','minimal tropical house made with concrete and red brick'),
+('A Narrow Lot Dream Home','slim narrow-lot house with a beautiful garden entrance'),
+('The Ultimate Open-Plan Living Room','luxurious warm open plan kitchen and living room'),
+('Tiny Kitchen, Smart Design','beautiful efficient compact kitchen inside tiny home'),
+('A Modern Home in the Mountains','small mountain getaway with natural stone details'),
+('A Dream Home Under the Stars','small luminous contemporary home on a serene night'),
+('The Perfect Outdoor Terrace','modern home with a garden terrace and outdoor lounge'),
+('A House Inspired by Nature','sustainable elegant house with an organic garden'),
+('Three Amazing Tiny Home Concepts','innovative single story small home design'),
+('A Simple Home With Warm Lighting','minimalist cozy villa with beautiful warm lighting'),
+('An Incredible Rooftop Garden','compact contemporary home with green rooftop'),
+('The Most Peaceful Tiny Retreat','quiet zen tiny house nestled in a tropical garden'),
+('A Hidden Garden Dream Home','beautiful private hidden courtyard home'),
+('The House of Tomorrow','plausible near future eco friendly smart house'),
+('The Best Dream Home Designs','award-worthy simple modern tropical home'),
 ]
 
-def font(size, bold=False):
-    paths = ['/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf' if bold else '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
-             '/usr/share/fonts/truetype/liberation2/LiberationSans-Regular.ttf']
-    for p in paths:
-        if Path(p).exists(): return ImageFont.truetype(p, size)
-    return ImageFont.load_default()
+def envbool(k, default=False): return os.getenv(k,str(default)).lower() in ('1','true','yes')
+def reqpost(url, **kwargs):
+    r=requests.post(url,timeout=180,**kwargs)
+    if not r.ok: raise RuntimeError(f'Provider error {r.status_code}: {r.text[:350]}')
+    return r
 
-def story(title):
-    # API text is optional, never request paid image/video tiers.
-    key = os.getenv('GEMINI_API_KEY', '')
-    fallback = (f'Imagine a home that makes every square meter count. {title}. '
-                'Natural light, smart spaces, warm materials, and a garden designed for everyday living. '
-                'This is an original architectural concept, not a real construction project. '
-                'Which detail would you keep in your dream home?')
-    if not key:
-        return fallback
-    model = 'gemini-2.5-flash-lite'
-    url = f'https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent'
-    prompt = (f'Write one fresh 50-65 word English narration for a Facebook Reel titled "{title}". '
-              'Focus on tangible home design details, no unverifiable prices, no claims it exists, '
-              'make clear it is a design concept, end with a question. Output narration only.')
+def load_state():
+    try: data=json.loads(STATE.read_text())
+    except (FileNotFoundError,json.JSONDecodeError): data={}
+    data.setdefault('published',{}); data.setdefault('spent_estimate_by_month',{})
+    return data
+
+def save_state(data): STATE.parent.mkdir(exist_ok=True); STATE.write_text(json.dumps(data,indent=2,ensure_ascii=False)+'\n')
+
+def reserve(state, amount, service):
+    # Conservative estimates, not measured invoices. Persist before API call to avoid runaway retries.
+    cap=float(os.getenv('MONTHLY_SPEND_CAP_USD','5.00'))
+    current=float(state['spent_estimate_by_month'].get(MONTH,0))
+    if current+amount>cap+1e-9: raise RuntimeError(f'Budget guard stopped {service}: estimated ${current+amount:.3f} exceeds ${cap:.2f}. No new call.')
+    state['spent_estimate_by_month'][MONTH]=round(current+amount,5); save_state(state)
+    print(f'Reserved estimate ${amount:.3f} for {service}; estimated month total ${current+amount:.3f} (not verified billing)')
+
+def gemini_script(title,desc):
+    fallback=(f'Could this be your dream home? Imagine {desc}. '
+      'The design combines natural light, practical spaces, and a welcoming connection to the garden. '
+      'Every detail is created as an architectural concept, not a real property or construction project. '
+      'Which feature would you add to make it yours?')
+    key=os.getenv('GEMINI_API_KEY','')
+    if not key: return fallback,'template'
     try:
-        r = requests.post(url, params={'key': key}, json={'contents':[{'parts':[{'text':prompt}]}],
-                  'generationConfig':{'temperature':0.8,'maxOutputTokens':220}}, timeout=25)
-        if r.status_code in (429,403):
-            print('Free-tier blocked or exhausted; using original fallback narration.')
-            return fallback
-        r.raise_for_status()
-        result = r.json()['candidates'][0]['content']['parts'][0]['text'].strip()
-        if 30 <= len(result.split()) <= 100: return result
-    except (requests.RequestException, KeyError, IndexError, ValueError) as exc:
-        print(f'Text AI unavailable; fallback used: {str(exc)[:140]}')
-    return fallback
+        url='https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent'
+        prompt=f'Write 56-72 words of original English video narration for a luxury design reel titled {title!r}, depicting {desc}. Natural cinematic documentary cadence. Begin with a striking hook, describe credible architectural features, do not claim a real home exists or give unverified prices, end with a question. Narration text only.'
+        r=requests.post(url,headers={'x-goog-api-key':key},json={'contents':[{'parts':[{'text':prompt}]}],'generationConfig':{'temperature':0.85,'maxOutputTokens':250}},timeout=35)
+        if not r.ok: print('Gemini unavailable; using local narration. HTTP',r.status_code); return fallback,'template'
+        txt=r.json()['candidates'][0]['content']['parts'][0]['text'].strip()
+        if 40<=len(txt.split())<=100: return txt,'gemini'
+    except Exception as e: print('Gemini fallback:',str(e)[:150])
+    return fallback,'template'
 
-def scene(title, index, seed, output):
-    rng = random.Random(seed + index * 1201)
-    W,H=540,960
-    img=Image.new('RGB',(W,H))
-    d=ImageDraw.Draw(img)
-    scheme=[((15,37,58),(83,156,180)),((23,38,52),(142,153,142)),((23,31,51),(165,126,108)),((18,50,51),(109,170,146))][seed%4]
-    for y in range(H):
-        t=y/H
-        col=tuple(int(scheme[0][v]*(1-t)+scheme[1][v]*t) for v in range(3))
-        d.line((0,y,W,y), fill=col)
-    # Stars/clouds and tropical landscape
-    for _ in range(18):
-        x=rng.randrange(W); y=rng.randrange(120,480); r=rng.randrange(1,3)
-        d.ellipse((x-r,y-r,x+r,y+r),fill=(208,228,222))
-    d.ellipse((370,150,454,234),fill=(249,204,129))
-    d.polygon([(0,650),(100,600),(230,660),(390,590),(540,640),(540,960),(0,960)],fill=(39,82,70))
-    d.rectangle((0,720,W,H),fill=(62,112,82))
-    # Different facade architectural concepts
-    x=68+((index%3)-1)*8; y=445+(index%2)*15
-    ww=410; hh=280
-    d.rectangle((x+17,y+18,x+ww+18,y+hh+18),fill=(22,45,45))
-    d.rectangle((x,y,x+ww,y+hh),fill=(220,207,181) if index%2 else (193,190,171))
-    d.polygon([(x-22,y+2),(x+ww+21,y+2),(x+ww+5,y-31),(x+12,y-31)],fill=(36,39,45))
-    # Brick accent
-    d.rectangle((x+ww-100,y,x+ww,y+hh), fill=(151,74,57))
-    for by in range(y+16,y+hh,24):
-        d.line((x+ww-100,by,x+ww,by),fill=(196,125,98),width=2)
-        for bx in range(x+ww-100 + (12 if (by//24)%2 else 0),x+ww,42):
-            d.line((bx,by,bx,by+24),fill=(196,125,98),width=2)
-    # Window panes & warm interior
-    for cx in [x+35,x+143]:
-        d.rectangle((cx,y+54,cx+88,y+229),fill=(28,68,75),outline=(34,41,43),width=7)
-        d.rectangle((cx+12,y+69,cx+75,y+215),fill=(221,177,119))
-        d.line((cx+45,y+60,cx+45,y+222), fill=(47,57,62),width=7)
-    d.rectangle((x+258,y+65,x+315,y+hh),fill=(45,69,72),outline=(27,36,38),width=7)
-    d.ellipse((x+297,y+180,x+302,y+185),fill=(240,208,149))
-    # Landscape foreground
-    for xx in [35,500]:
-        d.line((xx,800,xx+12,605), fill=(90,61,40),width=13)
-        for a in range(-2,3):
-            d.ellipse((xx+a*26-45,570+abs(a)*9,xx+a*26+55,650+abs(a)*9), fill=(34,108+rng.randrange(25),72))
-    d.polygon([(0,845),(210,777),(348,777),(540,845),(540,960),(0,960)], fill=(163,149,113))
-    # Onscreen hook, title in two-line safe zone
-    d.rounded_rectangle((28,44,512,160),radius=18,fill=(18,33,42))
-    d.text((46,61),'DREAM HOME VEXA',font=font(24,True),fill=(246,204,133))
-    small=['AI HOME CONCEPT','TINY HOUSE IDEAS','MODERN HOME DESIGN','DREAM HOME REVEAL','TROPICAL ARCHITECTURE'][index]
-    d.text((46,108),small,font=font(21),fill=(232,242,239))
-    d.text((28,904),'AI-GENERATED DESIGN CONCEPT',font=font(15,True),fill=(251,250,236))
-    img.save(output)
+def openai_image(key,prompt,file):
+    model=os.getenv('IMAGE_MODEL','gpt-image-1-mini')
+    payload={'model':model,'prompt':prompt,'size':'1024x1536','quality':'medium','n':1}
+    data=reqpost('https://api.openai.com/v1/images/generations',headers={'Authorization':'Bearer '+key},json=payload).json()
+    raw=base64.b64decode(data['data'][0]['b64_json']); file.write_bytes(raw)
+    with Image.open(file) as im: im.verify()
 
-def execute(*args):
-    subprocess.run(args, check=True, stdout=subprocess.DEVNULL)
+def voice(key,text,file):
+    model=os.getenv('VOICE_MODEL','gpt-4o-mini-tts'); name=os.getenv('VOICE_NAME','onyx')
+    payload={'model':model,'voice':name,'input':text,'response_format':'mp3','speed':0.96}
+    if model=='gpt-4o-mini-tts': payload['instructions']='Narrate in natural American English for a premium architectural documentary. Warm, confident, relaxed and personable. Subtle wonder, gentle expressive pauses, no shouting, no advertisement voice. Maintain natural human phrasing.'
+    r=reqpost('https://api.openai.com/v1/audio/speech',headers={'Authorization':'Bearer '+key},json=payload)
+    if len(r.content)<3000: raise RuntimeError('Suspiciously short TTS audio')
+    file.write_bytes(r.content)
 
-def render(title, narration, seed):
-    frames=[]
-    for i in range(5):
-        target=OUT/f'scene_{i}.png'
-        scene(title,i,seed,target)
-        frames.append(target)
-    (OUT/'narration.txt').write_text(narration,encoding='utf-8')
-    execute('espeak-ng','-v','en-us','-s','143','-w',str(OUT/'voice.wav'),narration)
-    lines=[]
-    for p in frames: lines += [f"file '{p}'",'duration 6']
-    lines += [f"file '{frames[-1]}'"]
-    (OUT/'slides.txt').write_text('\n'.join(lines)+'\n',encoding='utf-8')
-    execute('ffmpeg','-y','-loglevel','error','-safe','0','-f','concat','-i',str(OUT/'slides.txt'),
-            '-i',str(OUT/'voice.wav'),'-af','apad','-t','30','-r','24','-vf','scale=540:960,format=yuv420p',
-            '-c:v','libx264','-preset','veryfast','-crf','27','-c:a','aac','-b:a','96k',
-            '-movflags','+faststart',str(OUT/'reel.mp4'))
+def fallback_voice(text,file):
+    wav=OUT/'fallback.wav'
+    subprocess.run(['espeak-ng','-v','en-us','-s','142','-w',str(wav),text],check=True)
+    subprocess.run(['ffmpeg','-y','-loglevel','error','-i',str(wav),'-codec:a','libmp3lame','-qscale:a','4',str(file)],check=True)
 
-def graph_post(path, data=None, headers=None, json_payload=False):
-    base='https://graph.facebook.com/'+os.getenv('GRAPH_VERSION','v27.0')
-    token=os.environ['FB_PAGE_ACCESS_TOKEN']
-    req={'headers':{'Authorization':f'Bearer {token}',**(headers or {})},'timeout':120}
-    if json_payload: req['json']=data
-    else: req['data']=data
-    r=requests.post(base+'/'+path,**req)
-    r.raise_for_status()
-    return r.json()
+def duration(f):
+    result=subprocess.run(['ffprobe','-v','error','-show_entries','format=duration','-of','default=noprint_wrappers=1:nokey=1',str(f)],capture_output=True,text=True,check=True)
+    return float(result.stdout.strip())
 
-def publish(reel, title, caption):
-    page=os.environ['FB_PAGE_ID']; token=os.environ['FB_PAGE_ACCESS_TOKEN']
-    start=graph_post(f'{page}/video_reels',{'upload_phase':'start'})
-    video_id=start['video_id']
-    upload_url=start.get('upload_url',f'https://rupload.facebook.com/video-upload/{os.getenv("GRAPH_VERSION","v27.0")}/{video_id}')
-    body=reel.read_bytes()
-    r=requests.post(upload_url,headers={'Authorization':f'OAuth {token}',
-                'offset':'0','file_size':str(len(body)),'Content-Type':'application/octet-stream'},data=body,timeout=240)
-    r.raise_for_status()
-    result=graph_post(f'{page}/video_reels',{'upload_phase':'finish','video_id':video_id,
-                     'video_state':'PUBLISHED','title':title,'description':caption})
-    return {'video_id':video_id,'publish_response':result}
+def fit_canvas(inp,out,title,subtitle):
+    with Image.open(inp) as source:
+        im=source.convert('RGB')
+        # Input portrait, fit cover to 1080x1920 with restrained title overlays
+        W,H=1080,1920; sw,sh=im.size; scale=max(W/sw,H/sh)
+        nw,nh=math.ceil(sw*scale),math.ceil(sh*scale)
+        im=im.resize((nw,nh),Image.Resampling.LANCZOS)
+        left=(nw-W)//2; top=(nh-H)//2; im=im.crop((left,top,left+W,top+H))
+        overlay=Image.new('RGBA',(W,H),(0,0,0,0)); d=ImageDraw.Draw(overlay)
+        d.rounded_rectangle((52,92,1028,270),radius=28,fill=(7,21,28,184))
+        path='/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf'; path2='/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf'
+        f1=ImageFont.truetype(path,46); f2=ImageFont.truetype(path2,30); f3=ImageFont.truetype(path2,23)
+        d.text((88,120),'DREAM HOME VEXA',font=f1,fill=(255,217,161))
+        d.text((88,202),subtitle,font=f2,fill='white')
+        d.rounded_rectangle((50,1773,1030,1860),radius=15,fill=(7,21,28,150))
+        d.text((82,1795),'AI DESIGN CONCEPT  •  NOT A REAL PROPERTY',font=f3,fill='white')
+        Image.alpha_composite(im.convert('RGBA'),overlay).convert('RGB').save(out,quality=91)
+
+def assemble(frames,audio,out):
+    # 3 large stills with slow Ken Burns effect; camera motion, NOT generative video.
+    sound_d=duration(audio); total=max(29.0,min(43.0,sound_d+2.3)); fps=24
+    segments=[]
+    for i,p in enumerate(frames):
+        seconds=total/len(frames); count=math.ceil(seconds*fps)
+        vid=OUT/f'clip{i}.mp4'
+        z='min(zoom+0.00022,1.13)' if i%2==0 else 'max(1.13-on*0.00020,1.0)'
+        filt=f'scale=1200:2134,zoompan=z=\'{z}\':x=\'(iw-iw/zoom)/2\':y=\'(ih-ih/zoom)/2\':d={count}:s=1080x1920:fps={fps},format=yuv420p'
+        subprocess.run(['ffmpeg','-y','-loglevel','error','-loop','1','-i',str(p),'-vf',filt,'-t',str(seconds),'-r',str(fps),'-c:v','libx264','-preset','veryfast','-crf','23','-pix_fmt','yuv420p','-an',str(vid)],check=True)
+        segments.append(vid)
+    listing=OUT/'concat.txt'; listing.write_text('\n'.join("file '%s'"%s for s in segments)+'\n')
+    subprocess.run(['ffmpeg','-y','-loglevel','error','-f','concat','-safe','0','-i',str(listing),'-i',str(audio),'-map','0:v:0','-map','1:a:0','-c:v','copy','-c:a','aac','-b:a','160k','-af','loudnorm=I=-16:TP=-1.5:LRA=10,apad','-t',str(total),'-movflags','+faststart',str(out)],check=True)
+
+def graph_post(path,data):
+    version=os.getenv('GRAPH_VERSION','v27.0'); token=os.environ['FB_PAGE_ACCESS_TOKEN']
+    return reqpost(f'https://graph.facebook.com/{version}/{path}',headers={'Authorization':'Bearer '+token},data=data).json()
+
+def publish(reel,title,caption):
+    page=os.environ['FB_PAGE_ID']; token=os.environ['FB_PAGE_ACCESS_TOKEN']; version=os.getenv('GRAPH_VERSION','v27.0')
+    init=graph_post(f'{page}/video_reels',{'upload_phase':'start'}); vid=init['video_id']
+    upload_url=init.get('upload_url',f'https://rupload.facebook.com/video-upload/{version}/{vid}')
+    payload=reel.read_bytes()
+    reqpost(upload_url,headers={'Authorization':'OAuth '+token,'offset':'0','file_size':str(len(payload)),'Content-Type':'application/octet-stream'},data=payload)
+    result=graph_post(f'{page}/video_reels',{'upload_phase':'finish','video_id':vid,'video_state':'PUBLISHED','title':title,'description':caption})
+    return {'video_id':vid,'response':result,'note':'Publishing requested; confirm actual video status in Meta.'}
 
 def main():
-    today=dt.datetime.now(dt.timezone(dt.timedelta(hours=7))).date().isoformat()
-    state=json.loads(STATE.read_text()) if STATE.exists() else {'published':{}}
-    if today in state['published']:
-        print('Already recorded a published Reel today; refusing duplicate publish.')
-        return
-    idx=(dt.date.fromisoformat(today)-dt.date(2026,11,21)).days % len(TOPICS)
-    title=TOPICS[idx]
-    caption=f'{title} | An original architectural concept. Which design would you choose? #DreamHome #HomeDesign #TinyHouse #AIArchitecture'
-    narration=story(title)
-    render(title,narration,seed=idx)
-    (OUT/'metadata.json').write_text(json.dumps({'date':today,'title':title,'caption':caption,
-                                 'narration':narration,'note':'Illustrated architectural concept, not AI-generated photoreal footage'},indent=2),encoding='utf-8')
-    print('Created:',OUT/'reel.mp4', '| date:',today)
-    if os.getenv('ENABLE_PUBLISH','false').lower() != 'true':
-        print('Preview mode: posting disabled. Set repository variable ENABLE_PUBLISH=true after Meta authorization.')
-        return
-    if not (os.getenv('FB_PAGE_ID') and os.getenv('FB_PAGE_ACCESS_TOKEN')):
-        raise RuntimeError('Facebook publishing enabled but FB_PAGE_ID / FB_PAGE_ACCESS_TOKEN missing.')
-    result=publish(OUT/'reel.mp4',title,caption)
-    state['published'][today]=result
-    STATE.write_text(json.dumps(state,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
-    print('Reel upload/publish requested:',json.dumps(result))
-    print('IMPORTANT: Check processing/published status in Meta before treating the Reel as publicly visible.')
+    state=load_state()
+    if TODAY in state['published']:
+        print('Already published this date; refusing duplicate.'); return
+    idx=(dt.date.fromisoformat(TODAY)-dt.date(2026,11,21)).days%len(TOPICS)
+    title,desc=TOPICS[idx]
+    narration,script_source=gemini_script(title,desc)
+    (OUT/'narration.txt').write_text(narration)
+    key=os.getenv('OPENAI_API_KEY','')
+    if not key: raise RuntimeError('OPENAI_API_KEY missing: V2 does not silently revert to cartoon images.')
+    images_n=int(os.getenv('IMAGES_PER_REEL','3'))
+    if not 1<=images_n<=3: raise ValueError('IMAGES_PER_REEL must be 1..3')
+    est_img=float(os.getenv('IMAGE_ESTIMATE_USD','0.12'))
+    est_voice=float(os.getenv('VOICE_ESTIMATE_USD','0.05'))
+    # Verify budget before any call, including voice; reserved amount persisted prior to calls.
+    remaining=images_n*est_img+est_voice
+    cap=float(os.getenv('MONTHLY_SPEND_CAP_USD','5'))
+    used=float(state['spent_estimate_by_month'].get(MONTH,0))
+    if remaining+used>cap: raise RuntimeError(f'Estimated budget too low for this run: current ${used:.2f}, run ${remaining:.2f}, cap ${cap:.2f}')
+    frames=[]
+    shot=['wide exterior establishing shot, 3/4 architectural angle','new complementary view of the same architectural style, close-up facade details','open plan living kitchen interior matching the same architecture']
+    for i in range(images_n):
+        image_path=OUT/f'photo_{i}.png'
+        prompt=(f'Photorealistic high-end architectural photography. Subject: {desc}. '
+                f'Shot: {shot[i]}. Realistic buildable proportions, consistent tropical modern aesthetic, '
+                'concrete, warm natural timber, optional red brick. Beautiful realistic late afternoon light, '
+                'refined landscaping, believable materials, tasteful luxurious atmosphere, 35mm architectural photography, '
+                'original design. VERTICAL 2:3 composition. NO captions, NO letters, NO watermarks, NO diagrams, NO drawings, NO cartoon, NO people. '
+                'Design concept, not a real listing.')
+        reserve(state,est_img,f'AI image {i+1}/{images_n}')
+        openai_image(key,prompt,image_path)
+        frame=OUT/f'frame_{i}.jpg'; fit_canvas(image_path,frame,title,['PHOTOREALISTIC HOME CONCEPT','DESIGN DETAILS','INSIDE THE DREAM HOME'][i]); frames.append(frame)
+    voice_path=OUT/'voice.mp3'; voice_source='OpenAI '+os.getenv('VOICE_MODEL','gpt-4o-mini-tts')
+    if envbool('USE_PAID_VOICE',True):
+        reserve(state,est_voice,'AI voice')
+        try: voice(key,narration,voice_path)
+        except Exception as exc:
+            if not envbool('ALLOW_FALLBACK_VOICE',False): raise
+            print('Paid voice failed; use eSpeak backup:',str(exc)[:150]); fallback_voice(narration,voice_path); voice_source='eSpeak backup'
+    else:
+        fallback_voice(narration,voice_path); voice_source='eSpeak backup'
+    result=OUT/'reel.mp4'; assemble(frames,voice_path,result)
+    meta={'date':TODAY,'title':title,'script_source':script_source,'voice_source':voice_source,'images':images_n,'estimated_run_usd':round(remaining,4),
+          'estimated_month_usd':state['spent_estimate_by_month'].get(MONTH),'NOTE':'These are not actual billing statements. Confirm pricing and provider budget limits.'}
+    (OUT/'metadata.json').write_text(json.dumps(meta,indent=2))
+    print('SUCCESS: created',result,'bytes',result.stat().st_size, 'VOICE',voice_source)
+    if not envbool('ENABLE_PUBLISH'):
+        print('PREVIEW ONLY: publishing is OFF');return
+    if not (os.getenv('FB_PAGE_ID') and os.getenv('FB_PAGE_ACCESS_TOKEN')): raise RuntimeError('Missing Facebook page secrets')
+    caption=f'{title} — AI-generated architectural concept. Which feature would you choose? #DreamHome #HomeDesign #AIArchitecture #TinyHouse'
+    response=publish(result,title,caption); print('Facebook response:',response)
+    state['published'][TODAY]=response;save_state(state)
 
-if __name__=='__main__': main()
+if __name__=='__main__':
+    try: main()
+    except Exception as ex:
+        print('ERROR:',ex,file=sys.stderr); sys.exit(1)
