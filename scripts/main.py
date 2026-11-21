@@ -1,4 +1,4 @@
-"""Vexa Viral: AI entertainment stills, natural comedy voice, 30 original daily concepts.
+"""Vexa Viral Thailand: Thai comedy and Shopee affiliate preview studio.
 Use preview mode first. API charges are estimates, NOT an enforceable provider billing limit.
 """
 from __future__ import annotations
@@ -42,8 +42,8 @@ def reqpost(url, **kwargs):
 
 def load_state():
     try: data=json.loads(STATE.read_text())
-    except (FileNotFoundError,json.JSONDecodeError): data={}
-    data.setdefault('published',{}); data.setdefault('spent_estimate_by_month',{})
+    except FileNotFoundError: data={}
+    data.setdefault('generated',{}); data.setdefault('published',{}); data.setdefault('spent_estimate_by_month',{})
     return data
 
 def save_state(data): STATE.parent.mkdir(exist_ok=True); STATE.write_text(json.dumps(data,indent=2,ensure_ascii=False)+'\n')
@@ -147,7 +147,8 @@ def fit_canvas(inp,out,title,subtitle):
 def assemble(frames,audio,out):
     # 3 large stills with slow Ken Burns effect; camera motion, NOT generative video.
     sound_d=duration(audio); total=max(20.0,sound_d+1.5)
-    if total>60: raise RuntimeError('Thai narration exceeds 60 seconds; review before retry'); fps=24
+    if total>60: raise RuntimeError('Thai narration exceeds 60 seconds; review before retry')
+    fps=24
     segments=[]
     for i,p in enumerate(frames):
         seconds=total/len(frames); count=math.ceil(seconds*fps)
@@ -195,6 +196,8 @@ def main():
         },ensure_ascii=False,indent=2),encoding='utf-8')
         print('OFFLINE DRY RUN: output/preview_plan.json; no paid API or Facebook request')
         return
+    if TODAY in state['generated'] and not envbool('ALLOW_REGENERATE'):
+        print('Already generated today; skipping duplicate paid generation'); return
     key=os.getenv('OPENAI_API_KEY','')
     if not key: raise RuntimeError('OPENAI_API_KEY missing: Entertainment mode needs a valid image API key.')
     images_n=int(os.getenv('IMAGES_PER_REEL','3'))
@@ -205,6 +208,7 @@ def main():
     remaining=images_n*est_img+est_voice+(0.01 if os.getenv('GEMINI_API_KEY') else 0)
     cap=float(os.getenv('MONTHLY_SPEND_CAP_USD','5'))
     used=float(state['spent_estimate_by_month'].get(MONTH,0))
+    if not all(math.isfinite(x) and x>=0 for x in (est_img,est_voice,cap,used)) or est_img<=0 or est_voice<=0: raise ValueError('Invalid budget estimates')
     if remaining+used>cap: raise RuntimeError(f'Estimated budget too low for this run: current ${used:.2f}, run ${remaining:.2f}, cap ${cap:.2f}')
     if envbool('USE_PAID_VOICE',True) is False: raise RuntimeError('Thai TTS required')
     if os.getenv('GEMINI_API_KEY'): reserve(state,0.01,'Gemini script estimate')
@@ -237,20 +241,15 @@ def main():
         frame=OUT/f'frame_{i}.jpg'
         fit_canvas(image_path,frame,title,shots[i][0]); frames.append(frame)
     voice_path=OUT/'voice.mp3'; voice_source='OpenAI '+os.getenv('VOICE_MODEL','gpt-4o-mini-tts')
-    if envbool('USE_PAID_VOICE',True):
-        reserve(state,est_voice,'AI voice')
-        try: voice(key,narration,voice_path)
-        except Exception as exc:
-            if not envbool('ALLOW_FALLBACK_VOICE',False): raise
-            print('Paid voice failed; use eSpeak backup:',str(exc)[:150]); fallback_voice(narration,voice_path); voice_source='eSpeak backup'
-    else:
-        fallback_voice(narration,voice_path); voice_source='eSpeak backup'
+    reserve(state,est_voice,'Thai AI voice')
+    voice(key,narration,voice_path)
     result=OUT/'reel.mp4'; assemble(frames,voice_path,result)
     caption=affiliate_caption(title,affiliate) if affiliate else create_caption(title,desc,genre,punchline)
     (OUT/'caption.txt').write_text(caption,encoding='utf-8')
     meta={'date':TODAY,'title':title,'genre':genre,'caption':caption,'script_source':script_source,'voice_source':voice_source,'images':images_n,'brand':'Vexa Viral','language':'th-TH','affiliate_id':affiliate['id'] if affiliate else None,'affiliate_ready':bool(affiliate),'estimated_run_usd':round(remaining,4),
           'estimated_month_usd':state['spent_estimate_by_month'].get(MONTH),'NOTE':'Illustrated video with Ken Burns motion, NOT native AI video. Estimates are not billed amounts; confirm provider limits.'}
     (OUT/'metadata.json').write_text(json.dumps(meta,indent=2))
+    state['generated'][TODAY]={'title':title,'affiliate_id':affiliate['id'] if affiliate else None}; save_state(state)
     print('SUCCESS: created',result,'bytes',result.stat().st_size, 'VOICE',voice_source)
     if not (envbool('ENABLE_PUBLISH') and envbool('FB_LIVE_APPROVED')):
         print('PREVIEW ONLY: publishing requires BOTH ENABLE_PUBLISH and FB_LIVE_APPROVED=true');return
