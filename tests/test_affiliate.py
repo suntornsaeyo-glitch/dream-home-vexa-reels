@@ -6,22 +6,22 @@ import affiliate
 
 class AffiliateTests(unittest.TestCase):
     def test_unapproved_rejected(self):
-        x={'id':'p1','title':'A','category':'pet_gadgets','affiliate_url':'https://shop.example.org/product',
-           'program':'partner','visual_description':'generic cat toy','usage_rights_confirmed':True}
+        x={'id':'p1','title':'A','category':'pet_gadgets','affiliate_url':'https://s.shopee.co.th/test',
+           'program':'Shopee Thailand','visual_description':'generic cat toy','usage_rights_confirmed':True}
         self.assertFalse(affiliate.valid_product(x))
         x['approved']=True
         self.assertTrue(affiliate.valid_product(x))
     def test_bad_placeholder_rejected(self):
         x={'id':'p1','title':'A','category':'pet_gadgets','affiliate_url':'https://example.com/product',
-           'program':'partner','visual_description':'generic cat toy','usage_rights_confirmed':True,'approved':True}
+           'program':'Shopee Thailand','visual_description':'generic cat toy','usage_rights_confirmed':True,'approved':True}
         self.assertFalse(affiliate.valid_product(x))
     def test_schedule_without_products(self):
         self.assertIsNone(affiliate.select_affiliate('2026-11-21',[]))
     def test_disclosure(self):
-        x={'title':'Cat Toy','affiliate_url':'https://shop.example.org/product'}
+        x={'title':'Cat Toy','affiliate_url':'https://s.shopee.co.th/test'}
         caption=affiliate.affiliate_caption('Funny Cat',x)
-        self.assertIn('Affiliate disclosure:',caption)
-        self.assertIn('https://shop.example.org/product',caption)
+        self.assertIn('ลิงก์แอฟฟิลิเอต:',caption)
+        self.assertIn('https://s.shopee.co.th/test',caption)
         self.assertIn('\n',caption)
     def test_ratio(self):
         p=[{'id':'a'}]
