@@ -1,6 +1,15 @@
 {
   "published": {},
   "spent_estimate_by_month": {
-    "2026-11": 0.41
+    "2026-11": 0.83
+  },
+  "spent_estimate_by_day": {
+    "2026-11-23": 0.42
+  },
+  "generated": {
+    "2026-11-23": {
+      "title": "นาฬิกาปลุกขอลาออก",
+      "affiliate_id": null
+    }
   }
 }
